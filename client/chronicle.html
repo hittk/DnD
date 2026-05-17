@@ -1042,9 +1042,8 @@ function saveInitiative(){
 // ── MOBILE ─────────────────────────────────────────────────────
 function toggleSB(){const sb=el("sidebar"),ov=el("mob-ov");sb.classList.toggle("mob-open");ov.classList.toggle("show");}
 
-</script>
-</body>
-</html>async function doLogin(){
+// ── LOGIN ───────────────────────────────────────────────────────
+async function doLogin(){
   const serverUrl="wss://dnd-production-a09f.up.railway.app";
   const httpUrl=serverUrl.replace(/^ws/,"http");
   const code=(el("join-code").value||"").trim().toUpperCase();
@@ -1067,3 +1066,6 @@ function toggleSB(){const sb=el("sidebar"),ov=el("mob-ov");sb.classList.toggle("
   }catch(e){toast("Cannot reach server: "+e.message,"err");}
 }
 
+</script>
+</body>
+</html>
