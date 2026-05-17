@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chronicle — D&D 5e</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --void:#050407;--obsidian:#0c0a10;--stone:#131118;--iron:#1c1824;--iron2:#241f30;--iron3:#2e2840;
+  --ember:#e8622a;--ember2:#ff8c4a;--ember-dim:#6b2d10;--blood:#8b1a1a;--blood2:#c0392b;
+  --gold:#c9963a;--gold2:#e8b86d;--gold3:#f5d78e;--gold-dim:#5a3f10;
+  --text:#e8ddd0;--text2:#b8a898;--text3:#786858;--text4:#4a3c30;
+  --hp-high:#4a9e5c;--hp-mid:#d4a017;--hp-low:#c0392b;--blue:#4a90c4;
+  --f-title:'MedievalSharp',serif;--f-head:'Oswald',sans-serif;--f-body:'Crimson Pro',serif;
+  --glow-ember:0 0 20px rgba(232,98,42,0.4),0 0 60px rgba(232,98,42,0.15);
+  --glow-gold:0 0 15px rgba(201,150,58,0.35);--glow-blood:0 0 20px rgba(192,57,43,0.5);
+  --shadow-deep:0 8px 40px rgba(0,0,0,0.8);
+}
+html,body{height:100%;overflow:hidden;background:var(--void)}
+body{font-family:var(--f-body);font-size:15px;color:var(--text);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),radial-gradient(ellipse 80% 60% at 15% 10%,#1a0f2e 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 90% 90%,#1a0808 0%,transparent 60%),linear-gradient(160deg,#0c0a10 0%,#050407 50%,#0c0608 100%);}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--obsidian)}::-webkit-scrollbar-thumb{background:var(--iron3);border-radius:2px}
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+#game-wrap{display:flex;flex:1;overflow:hidden}
+#sidebar{width:205px;flex-shrink:0;background:linear-gradient(180deg,var(--obsidian) 0%,var(--void) 100%);border-right:1px solid var(--iron3);display:flex;flex-direction:column;overflow:hidden;position:relative}
+#sidebar::before{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(180deg,transparent,var(--ember-dim),transparent);opacity:.5}
+#sidebar-scroll{flex:1;overflow-y:auto;padding:10px 8px}
+#main-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+/* Header */
+#header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:54px;flex-shrink:0;background:linear-gradient(90deg,var(--obsidian),var(--stone),var(--obsidian));border-bottom:1px solid var(--iron3);position:relative;overflow:hidden}
+#header::before{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ember-dim),var(--gold-dim),var(--ember-dim),transparent)}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-icon{font-size:24px;filter:drop-shadow(var(--glow-ember))}
+.brand-name{font-family:var(--f-title);font-size:22px;letter-spacing:4px;background:linear-gradient(135deg,var(--gold3),var(--gold),var(--ember));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand-campaign{font-family:var(--f-head);font-size:11px;color:var(--text3);letter-spacing:3px;text-transform:uppercase;margin-top:1px}
+.hcontrols{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ws-status{display:flex;align-items:center;gap:6px}
+.ws-dot{width:7px;height:7px;border-radius:50%;transition:background .4s}
+.ws-dot.live{background:var(--hp-high);box-shadow:0 0 8px var(--hp-high)}.ws-dot.dead{background:var(--blood2)}
+/* Buttons */
+.btn{font-family:var(--f-head);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;border:1px solid var(--iron3);background:linear-gradient(135deg,var(--iron2),var(--iron));color:var(--text2);cursor:pointer;padding:7px 14px;clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px));transition:all .15s}
+.btn:hover{background:linear-gradient(135deg,var(--iron3),var(--iron2));color:var(--text);border-color:var(--gold-dim)}
+.btn.primary{background:linear-gradient(135deg,var(--ember-dim),#3d1a08);border-color:var(--ember);color:var(--gold3);box-shadow:var(--glow-ember)}
+.btn.primary:hover{background:linear-gradient(135deg,#7a3015,var(--ember-dim))}
+.btn.danger{border-color:var(--blood);color:#f87171}.btn.danger:hover{background:rgba(139,26,26,.3)}
+.btn.combat-on{border-color:var(--blood2);color:#f87171}.btn.combat-off{border-color:var(--hp-high);color:#86efac}
+.bsm{background:none;border:1px solid var(--iron3);color:var(--text3);cursor:pointer;padding:5px 10px;font-size:11px;font-family:var(--f-head);letter-spacing:1px;transition:all .15s}
+.bsm:hover{border-color:var(--gold-dim);color:var(--gold2)}.bsm.danger:hover{border-color:var(--blood);color:#f87171}
+/* Forms */
+label.lbl{display:block;font-family:var(--f-head);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+input,select,textarea{display:block;width:100%;background:rgba(0,0,0,.5);border:1px solid var(--iron3);color:var(--text);padding:8px 11px;font-family:var(--f-body);font-size:14px;outline:none;transition:border-color .15s;clip-path:polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,0 100%)}
+input:focus,select:focus,textarea:focus{border-color:var(--ember-dim);box-shadow:0 0 0 1px rgba(232,98,42,.2)}
+textarea{resize:vertical;min-height:70px;line-height:1.5;clip-path:none}
+input[type=number]{-moz-appearance:textfield}
+select option{background:var(--stone)}
+.field{margin-bottom:12px}
+/* Section head */
+.sh{font-family:var(--f-head);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--ember);margin:18px 0 10px;display:flex;align-items:center;gap:10px}
+.sh::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--ember-dim),transparent)}
+/* Login */
+#login-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--void);background-image:radial-gradient(ellipse 100% 80% at 50% 0%,#1a0f2e 0%,transparent 50%),radial-gradient(ellipse 60% 60% at 50% 100%,#200808 0%,transparent 60%);overflow-y:auto;padding:20px}
+.lwrap{width:100%;max-width:460px;text-align:center}
+.lcrest{font-size:64px;margin-bottom:12px;filter:drop-shadow(0 0 30px rgba(232,98,42,.6)) drop-shadow(0 0 60px rgba(201,150,58,.3));animation:cp 3s ease-in-out infinite}
+@keyframes cp{0%,100%{filter:drop-shadow(0 0 30px rgba(232,98,42,.6))}50%{filter:drop-shadow(0 0 50px rgba(232,98,42,.9))}}
+.ltitle{font-family:var(--f-title);font-size:52px;letter-spacing:8px;background:linear-gradient(135deg,var(--gold3) 0%,var(--gold) 40%,var(--ember) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;line-height:1}
+.lsub{font-family:var(--f-head);font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--text3);margin-bottom:32px}
+.lcard{background:linear-gradient(160deg,var(--iron) 0%,var(--obsidian) 100%);border:1px solid var(--iron3);padding:28px;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))}
+.share-box{background:rgba(74,144,196,.06);border:1px solid rgba(74,144,196,.15);padding:12px 16px;margin-bottom:22px;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));text-align:left}
+.share-title{font-family:var(--f-head);font-size:11px;letter-spacing:2px;color:var(--blue);margin-bottom:4px}
+.share-body{font-size:13px;color:var(--text3);line-height:1.5}
+.rtabs{display:flex;gap:0;margin-bottom:20px}
+.rtab{flex:1;padding:11px;cursor:pointer;font-family:var(--f-head);font-size:12px;letter-spacing:2px;text-transform:uppercase;background:var(--obsidian);border:1px solid var(--iron3);color:var(--text4);transition:all .15s}
+.rtab:first-child{border-right:none;clip-path:polygon(0 0,100% 0,100% 100%,8px 100%,0 calc(100% - 8px))}
+.rtab:last-child{clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
+.rtab.active{background:linear-gradient(135deg,var(--ember-dim),#1a0c05);border-color:var(--ember);color:var(--gold3)}
+/* Sidebar */
+.slabel{font-family:var(--f-head);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--iron3);padding:6px 6px 8px;border-bottom:1px solid var(--iron2);margin-bottom:6px}
+.cc{padding:9px 8px;margin-bottom:3px;cursor:pointer;border:1px solid transparent;transition:all .2s;position:relative;overflow:hidden;background:rgba(0,0,0,.2)}
+.cc::before{content:'';position:absolute;left:0;top:0;width:2px;height:100%;background:var(--ember-dim);transition:background .2s}
+.cc:hover{background:rgba(232,98,42,.04);border-color:var(--iron2)}.cc:hover::before{background:var(--ember)}
+.cc.active{background:linear-gradient(135deg,rgba(232,98,42,.08),rgba(0,0,0,.3));border-color:var(--ember-dim)}.cc.active::before{background:var(--ember);box-shadow:var(--glow-ember)}
+.cc-inner{display:flex;align-items:center;gap:8px}
+.cc-thumb{width:36px;height:44px;flex-shrink:0;border:1px solid var(--iron3);background:var(--obsidian);clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,5px 100%,0 calc(100% - 5px));display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden}
+.cc-thumb img{width:100%;height:100%;object-fit:cover;object-position:top}
+.cc-name{font-family:var(--f-head);font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc.active .cc-name{color:var(--gold2)}
+.cc-class{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-lvl{font-family:var(--f-head);font-size:10px;color:var(--ember);margin-top:1px}
+.tbar{height:3px;background:rgba(0,0,0,.5);margin-top:6px;border-radius:1px;overflow:hidden}
+.tfill{height:100%;transition:width .5s,background .5s;border-radius:1px}
+/* Sheet */
+#sheet-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.s-hero{position:relative;height:170px;flex-shrink:0;overflow:hidden;background:var(--obsidian);display:flex;align-items:flex-end}
+.s-hero-bg{position:absolute;inset:0;background:linear-gradient(160deg,#1a0f2e 0%,var(--obsidian) 100%)}
+.s-hero-portrait{position:absolute;right:0;top:0;bottom:0;width:44%;background:var(--obsidian);overflow:hidden}
+.s-hero-portrait img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.s-hero-portrait::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--obsidian) 0%,transparent 40%,transparent 60%,rgba(0,0,0,.4) 100%)}
+.s-hero-overlay{position:absolute;bottom:0;left:0;right:0;height:65%;background:linear-gradient(0deg,var(--obsidian) 0%,transparent 100%)}
+.s-hero-content{position:relative;z-index:2;padding:16px 20px;flex:1}
+.s-name{font-family:var(--f-title);font-size:28px;letter-spacing:2px;background:linear-gradient(135deg,var(--gold3),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;margin-bottom:3px}
+.s-name.lowhp{background:linear-gradient(135deg,var(--blood2),#ff6b6b);-webkit-background-clip:text;background-clip:text;animation:bp 2s ease-in-out infinite}
+@keyframes bp{0%,100%{opacity:1}50%{opacity:.7}}
+.s-sub{font-family:var(--f-head);font-size:13px;color:var(--ember2);letter-spacing:1px;margin-bottom:2px}
+.s-align{font-size:13px;color:var(--text3)}
+.npc-badge{display:inline-block;font-family:var(--f-head);font-size:9px;letter-spacing:2px;border:1px solid var(--ember-dim);color:var(--ember2);padding:2px 7px;margin-left:8px;clip-path:polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,4px 100%,0 calc(100% - 4px))}
+.ph-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:56px;opacity:.12}
+/* Stats ribbon */
+.stats-ribbon{display:flex;align-items:stretch;background:var(--stone);border-top:1px solid var(--iron3);border-bottom:1px solid var(--iron3);flex-shrink:0}
+.sp{flex:1;padding:9px 6px;text-align:center;border-right:1px solid var(--iron3)}.sp:last-child{border-right:none}
+.sp-lbl{font-family:var(--f-head);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:2px}
+.sp-val{font-family:var(--f-head);font-size:19px;font-weight:700;color:var(--gold2);line-height:1}
+.sp-sub{font-size:10px;color:var(--text3);margin-top:1px}
+/* HP */
+.hps{padding:12px 18px;background:var(--obsidian);border-bottom:1px solid var(--iron3);flex-shrink:0}
+.hp-outer{height:22px;background:rgba(0,0,0,.6);border:1px solid var(--iron3);position:relative;overflow:hidden;margin-bottom:8px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+.hp-fill{position:absolute;left:0;top:0;height:100%;transition:width .5s,background .5s}
+.hp-fill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:4px;background:rgba(255,255,255,.2)}
+.hp-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--f-head);font-size:12px;letter-spacing:1px;color:var(--text);text-shadow:0 1px 4px rgba(0,0,0,1)}
+.hp-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.conds-row{display:flex;flex-wrap:wrap;gap:5px;padding:8px 18px;background:var(--obsidian);border-bottom:1px solid var(--iron3);min-height:38px;align-items:center;flex-shrink:0}
+.ctag{display:inline-flex;align-items:center;gap:4px;background:rgba(139,26,26,.3);border:1px solid var(--blood);padding:2px 8px;font-family:var(--f-head);font-size:10px;letter-spacing:1px;color:#f87171;clip-path:polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,4px 100%,0 calc(100% - 4px))}
+.crem{cursor:pointer;opacity:.6;font-size:14px;line-height:1}.crem:hover{opacity:1}
+/* Death saves */
+.dw{background:rgba(139,26,26,.1);border:1px solid var(--blood);padding:10px 18px;display:flex;align-items:center;gap:18px;flex-shrink:0;animation:df 3s ease-in-out infinite}
+@keyframes df{0%,100%{background:rgba(139,26,26,.1)}50%{background:rgba(139,26,26,.18)}}
+.dpip{width:15px;height:15px;border-radius:50%;border:2px solid currentColor;display:inline-block;cursor:pointer;transition:background .2s,box-shadow .2s}
+.dpip.lit{background:currentColor}.dpip.lit.s{box-shadow:0 0 8px var(--hp-high)}.dpip.lit.f{animation:pp .8s ease-in-out infinite}
+@keyframes pp{0%,100%{box-shadow:0 0 8px var(--blood2)}50%{box-shadow:0 0 16px var(--blood2)}}
+/* Tabs */
+.tab-bar{display:flex;background:var(--stone);border-bottom:2px solid var(--iron3);flex-shrink:0;overflow-x:auto}
+.tab-bar::-webkit-scrollbar{height:0}
+.tbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 16px;cursor:pointer;font-family:var(--f-head);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text4);border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;min-width:60px;white-space:nowrap}
+.tbtn .ti{font-size:16px;transition:transform .2s}
+.tbtn:hover{color:var(--text2)}.tbtn:hover .ti{transform:scale(1.1)}
+.tbtn.active{color:var(--ember2);border-bottom-color:var(--ember)}.tbtn.active .ti{filter:drop-shadow(0 0 6px var(--ember))}
+.tab-content{flex:1;overflow-y:auto;padding:18px 20px}
+/* Abilities */
+.ab-grid{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.ab-block{background:linear-gradient(160deg,var(--iron),var(--obsidian));border:1px solid var(--iron3);padding:10px 12px;text-align:center;min-width:74px;flex:1;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));transition:border-color .2s}
+.ab-block:hover{border-color:var(--gold-dim)}
+.ab-ab{font-family:var(--f-head);font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:4px}
+.ab-score{font-family:var(--f-head);font-size:28px;font-weight:700;color:var(--gold2);line-height:1}
+.ab-mod{font-family:var(--f-head);font-size:15px;color:var(--ember2);margin-top:2px}
+.ab-save{font-size:11px;color:var(--text4);margin-top:1px}
+.ab-input{width:54px;text-align:center;font-size:22px;padding:4px;background:rgba(0,0,0,.5);border:1px solid var(--ember-dim);color:var(--gold2);font-family:var(--f-head);clip-path:none}
+/* Skills */
+.sk-row{display:flex;align-items:center;gap:8px;padding:4px 8px;transition:background .15s}
+.sk-row:hover{background:rgba(232,98,42,.04)}
+.sk-icon{font-size:14px;cursor:pointer;transition:color .15s,text-shadow .15s;user-select:none}
+.sk-icon.n{color:var(--iron3)}.sk-icon.p{color:var(--gold);text-shadow:0 0 6px rgba(201,150,58,.4)}.sk-icon.e{color:var(--ember2);text-shadow:0 0 8px rgba(232,98,42,.5)}
+/* Spell slots */
+.ssl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.ssl-card{background:linear-gradient(160deg,var(--iron),var(--obsidian));border:1px solid var(--iron3);padding:10px;clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%)}
+.ssl-lvl{font-family:var(--f-head);font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:6px}
+.slot-pips{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px}
+.spip{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--gold-dim);display:inline-block;cursor:pointer;transition:all .15s}
+.spip.avail{background:var(--gold);border-color:var(--gold);box-shadow:0 0 6px rgba(201,150,58,.4)}.spip.used{background:transparent}
+/* Currency */
+.cbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.coin{flex:1;text-align:center;padding:10px 6px;background:linear-gradient(160deg,var(--iron),var(--obsidian));border:1px solid var(--iron3);min-width:58px}
+.coin-lbl{font-family:var(--f-head);font-size:10px;letter-spacing:2px;margin-bottom:4px}
+.coin-inp{text-align:center;font-size:16px;padding:4px;background:transparent;border:none;border-bottom:1px solid var(--iron3);color:var(--text);font-family:var(--f-head);clip-path:none;width:100%}
+/* Weapon table */
+.wtbl{width:100%;border-collapse:collapse;margin-bottom:12px}
+.wtbl th{font-family:var(--f-head);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:4px 8px;border-bottom:1px solid var(--iron3);text-align:left}
+.wtbl td{padding:8px;border-bottom:1px solid rgba(28,24,36,.8);font-size:14px;vertical-align:middle}
+.wtbl tr:hover td{background:rgba(232,98,42,.03)}
+/* Approval */
+.acard{background:rgba(212,160,23,.06);border:1px solid rgba(212,160,23,.3);padding:14px;margin-bottom:12px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+/* Layout helpers */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pre{white-space:pre-wrap;font-family:var(--f-body);font-size:14px;color:var(--text2);line-height:1.6}
+/* Toast */
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;font-family:var(--f-head);font-size:12px;letter-spacing:1px;padding:12px 18px;border:1px solid var(--iron3);clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));box-shadow:var(--shadow-deep);display:none}
+#toast.ok{background:rgba(74,158,92,.15);border-color:var(--hp-high);color:#86efac}
+#toast.err{background:rgba(139,26,26,.2);border-color:var(--blood2);color:#f87171}
+#toast.info{background:rgba(74,144,196,.1);border-color:var(--blue);color:var(--blue)}
+#toast.warn{background:rgba(212,160,23,.1);border-color:var(--hp-mid);color:var(--gold2)}
+/* Modal */
+.mbg{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.85);display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:30px 20px;backdrop-filter:blur(4px)}
+.mbox{background:linear-gradient(160deg,var(--iron) 0%,var(--obsidian) 100%);border:1px solid var(--iron3);width:100%;max-width:860px;padding:24px;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px));animation:mi .2s ease}
+@keyframes mi{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.mtitle{font-family:var(--f-title);font-size:22px;color:var(--gold3);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.mtitle::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--ember-dim),transparent)}
+/* Inspiration */
+.insp{display:inline-flex;align-items:center;gap:6px;padding:3px 12px;font-family:var(--f-head);font-size:11px;letter-spacing:2px;border:1px solid var(--gold);color:var(--gold3);background:rgba(201,150,58,.1);box-shadow:0 0 12px rgba(201,150,58,.2);animation:ig 2s ease-in-out infinite}
+@keyframes ig{0%,100%{box-shadow:0 0 12px rgba(201,150,58,.2)}50%{box-shadow:0 0 20px rgba(201,150,58,.4)}}
+/* Empty */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--iron3);font-family:var(--f-head);letter-spacing:4px;font-size:13px;gap:14px}
+/* Buttons extended */
+.btn.success{border-color:var(--hp-high);color:#86efac}.btn.success:hover{background:rgba(74,158,92,.2)}
+/* Info box */
+.ibox{background:rgba(74,144,196,.06);border:1px solid rgba(74,144,196,.2);padding:12px 16px;margin-bottom:12px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+.ibox-t{font-family:var(--f-head);font-size:10px;letter-spacing:2px;color:var(--blue);margin-bottom:6px}
+.ibox-b{font-size:13px;color:var(--text2);line-height:1.5}
+/* Dice panel */
+#dice-panel{transform:translateY(100%);transition:transform .3s}
+#dice-panel.open{transform:translateY(0)!important}
+.dice-result{font-family:var(--f-head);font-size:22px;text-align:center;color:var(--gold2);min-height:32px;margin-bottom:8px}
+.dice-result.crit{color:var(--hp-high);text-shadow:0 0 12px var(--hp-high)}
+.dice-result.fumble{color:var(--blood2);text-shadow:0 0 12px var(--blood2)}
+.dl-entry{font-size:12px;color:var(--text3);padding:2px 0;border-bottom:1px solid var(--iron2)}
+.da{color:var(--gold);font-family:var(--f-head);font-size:10px;margin-right:4px}
+/* Mobile */
+#mob-ov{display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.6)}
+#mob-ov.show{display:block}
+/* Exhaustion */
+.exhaust-track{display:flex;gap:4px;margin:4px 0}
+.exhaust-pip{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--iron3);cursor:pointer;transition:all .15s}
+.exhaust-pip.lit{background:var(--blood2);border-color:var(--blood2);box-shadow:0 0 6px var(--blood2)}
+.exhaust-penalty{font-size:11px;color:var(--blood2);margin-top:4px;font-style:italic}
+/* Hit dice */
+.hd-track{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0}
+.hd-pip{width:22px;height:22px;border-radius:3px;border:1.5px solid var(--iron3);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;font-family:var(--f-head);font-size:9px;color:var(--text3)}
+.hd-pip.avail{border-color:var(--gold-dim);background:rgba(201,150,58,.1);color:var(--gold2)}
+.rest-btn{font-family:var(--f-head);font-size:10px;letter-spacing:1px;padding:5px 12px;border:1px solid var(--iron3);background:var(--obsidian);color:var(--text2);cursor:pointer;transition:all .15s;clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,5px 100%,0 calc(100% - 5px))}
+.rest-btn:hover{border-color:var(--gold-dim);color:var(--gold2)}
+/* Concentration */
+.conc-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;font-family:var(--f-head);font-size:10px;letter-spacing:1px;border:1px solid var(--blue);color:var(--blue);background:rgba(74,144,196,.08)}
+/* Spell list */
+.spell-entry{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid var(--iron2);transition:background .15s}
+.spell-entry:hover{background:rgba(232,98,42,.04)}
+.spell-name{font-family:var(--f-head);font-size:12px;color:var(--text2);flex:1}
+.spell-meta{font-size:11px;color:var(--text3)}
+.spell-conc{font-size:10px;color:var(--blue);font-style:italic}
+/* Attunement */
+.attune-slot{background:var(--obsidian);border:1px solid var(--iron3);padding:8px 12px;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.attune-slot-num{font-family:var(--f-head);font-size:11px;color:var(--text3);min-width:20px}
+.attune-item{flex:1;background:transparent;border:none;border-bottom:1px solid var(--iron2);color:var(--text);font-family:var(--f-body);font-size:14px;clip-path:none;padding:2px 0}
+/* Multiclass */
+.multiclass-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--iron2)}
+/* Session log */
+.log-entry{padding:6px 8px;border-bottom:1px solid var(--iron2);font-size:13px;line-height:1.4}
+.let{font-size:10px;color:var(--text3);font-family:var(--f-head);letter-spacing:1px;display:block;margin-bottom:2px}
+.lea{color:var(--gold2);font-family:var(--f-head);font-size:11px;margin-right:6px}
+.leb.roll{color:var(--ember2)}.leb.system{color:var(--blue);font-style:italic}.leb.log{color:var(--text2)}
+/* Level up overlay */
+#lu-overlay{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.92);flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(4px);cursor:pointer}
+/* Approval card */
+.acard{background:rgba(212,160,23,.06);border:1px solid rgba(212,160,23,.3);padding:14px;margin-bottom:12px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- LOGIN -->
+  <div id="login-screen">
+  <div class="lwrap">
+    <div class="lcrest">⚔️</div>
+    <div class="ltitle">CHRONICLE</div>
+    <div class="lsub">D&amp;D 5e Campaign Tracker</div>
+    <div class="share-box">
+      <div class="share-title">🗺 Join a Campaign</div>
+      <div class="share-body">Enter the <strong>join code</strong> from your DM to build your character and enter the realm.</div>
+    </div>
+    <div class="lcard">
+      <input id="server-url" type="hidden" value="wss://dnd-production-a09f.up.railway.app"/>
+      <div class="field"><label class="lbl">Join Code</label><input id="join-code" placeholder="6-character code from your DM" style="text-transform:uppercase;letter-spacing:4px"/></div>
+      <div class="field"><label class="lbl">Your Character Name</label><input id="join-charname" placeholder="What's your character called?"/></div>
+      <div class="field"><label class="lbl">Your Name (optional)</label><input id="join-playername" placeholder="So the DM knows who you are"/></div>
+      <button class="btn primary" style="width:100%;padding:13px;margin-top:6px" onclick="doLogin()">Enter the Realm</button>
+    </div>
+  </div>
+</div>
+<!-- GAME -->
+  <div id="game-screen" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+    <div id="header">
+      <div class="brand">
+        <span class="brand-icon">⚔️</span>
+        <div><div class="brand-name">CHRONICLE</div><div class="brand-campaign" id="camp-lbl">—</div></div>
+      </div>
+      <div class="hcontrols">
+        <div class="ws-status"><div class="ws-dot dead" id="ws-dot"></div><span id="ws-lbl" style="font-family:var(--f-head);font-size:10px;letter-spacing:1px;color:var(--text3)">Connecting</span></div>
+        <div id="dm-ctrl" style="display:none;display:flex;gap:6px;align-items:center">
+          <button class="bsm" onclick="showSetup()">⚙ Setup</button>
+          <button class="bsm combat-off" id="cmbt-btn" onclick="toggleCombat()">⚔ Combat</button>
+          <div id="round-wrap" style="display:none;align-items:center;gap:6px">
+            <span style="font-family:var(--f-head);font-size:10px;letter-spacing:2px;color:var(--ember)">ROUND</span>
+            <span id="round-num" style="font-family:var(--f-head);font-size:18px;font-weight:700;color:var(--gold2)">1</span>
+            <button class="bsm" onclick="nextRound()">▶</button>
+          </div>
+          <button class="bsm" onclick="showAddNPC()">＋ NPC</button>
+          <button class="bsm" id="appr-btn" onclick="showApprovals()" style="display:none">🎨 Art <span id="appr-cnt" style="color:var(--hp-mid)"></span></button>
+        </div>
+        <div id="role-badge" style="font-family:var(--f-head);font-size:11px;color:var(--text3);border-left:1px solid var(--iron2);padding-left:10px;letter-spacing:1px"></div>
+      </div>
+    </div>
+    <div id="game-wrap">
+      <div id="sidebar">
+        <div id="sidebar-scroll">
+          <div class="slabel">Party</div>
+          <div id="sb-players"></div>
+          <div id="sb-npc-wrap" style="display:none">
+            <div class="slabel" style="margin-top:10px">Enemies</div>
+            <div id="sb-npcs"></div>
+          </div>
+        </div>
+      </div>
+      <div id="main-panel">
+        <div id="sheet-wrap">
+          <div class="empty" id="empty-state"><div style="font-size:48px;opacity:.2">⚔️</div><div>SELECT A CHARACTER</div></div>
+          <div id="sheet-area" style="display:none;flex:1;flex-direction:column;overflow:hidden"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUILDER SCREEN — player fills out their character after joining -->
+  <div id="builder-screen" style="display:none;position:fixed;inset:0;z-index:900;flex-direction:column;overflow:hidden;background:var(--void)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--obsidian);border-bottom:1px solid var(--iron3);flex-shrink:0">
+      <div style="font-family:var(--f-title);font-size:20px;color:var(--gold3)">⚔ CHARACTER CREATION</div>
+      <div id="builder-charname" style="font-family:var(--f-head);color:var(--ember2);letter-spacing:2px"></div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:20px" id="builder-content"></div>
+    <div style="padding:14px 20px;background:var(--obsidian);border-top:1px solid var(--iron3);display:flex;gap:8px;flex-shrink:0">
+      <button class="btn primary" style="flex:1;padding:12px" onclick="submitProfile()">⚔ Submit to DM</button>
+    </div>
+  </div>
+
+  <!-- WAITING SCREEN — shown after profile submission, pending DM approval -->
+  <div id="waiting-screen" style="display:none;position:fixed;inset:0;z-index:900;flex-direction:column;align-items:center;justify-content:center;background:var(--void)">
+    <div style="font-size:64px;margin-bottom:24px;filter:drop-shadow(0 0 30px rgba(232,98,42,.6));animation:cp 3s ease-in-out infinite">⏳</div>
+    <div style="font-family:var(--f-title);font-size:28px;color:var(--gold3);margin-bottom:12px;letter-spacing:4px">AWAITING DM</div>
+    <div id="wait-status" style="font-family:var(--f-head);font-size:12px;letter-spacing:2px;color:var(--text3);margin-bottom:24px;text-align:center;max-width:360px;line-height:1.8"></div>
+    <button class="bsm" onclick="resubmit()">✏ Edit Profile</button>
+  </div>
+
+  <!-- LEVEL UP OVERLAY -->
+  <div id="lu-overlay" style="display:none" onclick="this.style.display='none'">
+    <div style="font-size:72px;margin-bottom:16px;animation:cp 1s ease-in-out infinite">⭐</div>
+    <div style="font-family:var(--f-title);font-size:36px;color:var(--gold3);margin-bottom:8px;letter-spacing:4px">LEVEL UP!</div>
+    <div id="lu-sub" style="font-family:var(--f-head);font-size:14px;color:var(--ember2);letter-spacing:2px;margin-bottom:24px"></div>
+    <div style="font-size:13px;color:var(--text3)">Click anywhere to dismiss</div>
+  </div>
+
+  <!-- DICE PANEL — slides up from bottom-right -->
+  <div id="dice-panel" style="position:fixed;bottom:0;right:20px;z-index:400;background:linear-gradient(160deg,var(--iron),var(--obsidian));border:1px solid var(--iron3);border-bottom:none;padding:14px 16px;min-width:230px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div style="font-family:var(--f-head);font-size:9px;letter-spacing:3px;color:var(--text3);flex:1">🎲 DICE ROLLER</div>
+      <label style="font-family:var(--f-head);font-size:9px;color:var(--text3)">×<input id="dice-cnt" type="number" min="1" max="20" value="1" style="width:36px;text-align:center;clip-path:none;margin-left:3px"/></label>
+      <label style="font-family:var(--f-head);font-size:9px;color:var(--text3)">+<input id="dice-mod" type="number" value="0" style="width:40px;text-align:center;clip-path:none;margin-left:3px"/></label>
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="bsm" onclick="rollDie(4)">d4</button>
+      <button class="bsm" onclick="rollDie(6)">d6</button>
+      <button class="bsm" onclick="rollDie(8)">d8</button>
+      <button class="bsm" onclick="rollDie(10)">d10</button>
+      <button class="bsm" onclick="rollDie(12)">d12</button>
+      <button class="bsm" onclick="rollDie(20)">d20</button>
+      <button class="bsm" onclick="rollDie(100)">d%</button>
+    </div>
+    <div id="dice-res" class="dice-result"></div>
+    <div id="dice-log" style="max-height:80px;overflow-y:auto"></div>
+  </div>
+
+  <!-- MOBILE SIDEBAR OVERLAY -->
+  <div id="mob-ov" onclick="toggleSB()"></div>
+
+</div>
+<div id="toast"></div>
+<div id="modal-root"></div>
+<script>
+const ABILITIES=["STR","DEX","CON","INT","WIS","CHA"];
+const ABILITY_FULL={STR:"Strength",DEX:"Dexterity",CON:"Constitution",INT:"Intelligence",WIS:"Wisdom",CHA:"Charisma"};
+const SKILLS={Acrobatics:"DEX",AnimalHandling:"WIS",Arcana:"INT",Athletics:"STR",Deception:"CHA",History:"INT",Insight:"WIS",Intimidation:"CHA",Investigation:"INT",Medicine:"WIS",Nature:"INT",Perception:"WIS",Performance:"CHA",Persuasion:"CHA",Religion:"INT",SlightOfHand:"DEX",Stealth:"DEX",Survival:"WIS"};
+const CONDITIONS=["Blinded","Charmed","Deafened","Frightened","Grappled","Incapacitated","Invisible","Paralyzed","Petrified","Poisoned","Prone","Restrained","Stunned","Unconscious"];
+const CLASSES=["Barbarian","Bard","Cleric","Druid","Fighter","Monk","Paladin","Ranger","Rogue","Sorcerer","Warlock","Wizard","Artificer","Blood Hunter"];
+const RACES=["Human","Elf","Dwarf","Halfling","Gnome","Half-Elf","Half-Orc","Tiefling","Dragonborn","Aasimar","Tabaxi","Kenku","Lizardfolk","Tortle","Custom"];
+const ALIGNMENTS=["Lawful Good","Neutral Good","Chaotic Good","Lawful Neutral","True Neutral","Chaotic Neutral","Lawful Evil","Neutral Evil","Chaotic Evil"];
+const XP_THR=[0,300,900,2700,6500,14000,23000,34000,48000,64000,85000,100000,120000,140000,165000,195000,225000,265000,305000,355000];
+const EXHAUST_PENALTIES=["None","Disadvantage on ability checks","Speed halved","Disadvantage on attacks & saves","HP max halved","Speed reduced to 0","Death"];
+const TABS=[{id:"core",icon:"⚔️",label:"Core"},{id:"combat",icon:"🛡",label:"Combat"},{id:"skills",icon:"🎯",label:"Skills"},{id:"spells",icon:"✨",label:"Spells"},{id:"gear",icon:"🎒",label:"Gear"},{id:"notes",icon:"📜",label:"Notes"},{id:"log",icon:"📖",label:"Log"}];
+window.onerror=(msg,src,line,col,err)=>{console.error("Chronicle error:",msg,src,line);const ls=document.getElementById("login-screen");if(ls&&ls.style.display!=="none")document.body.insertAdjacentHTML("beforeend",`<div style="position:fixed;bottom:10px;left:10px;background:#1c1824;border:1px solid #c0392b;color:#f87171;padding:10px;font-family:monospace;font-size:11px;z-index:9999;max-width:400px">JS Error: ${msg} (line ${line})</div>`);return false;};
+let ws=null,session=null,myRole=null,myPin=null,serverUrl="",activeCharId=null,activeTab="core",reconnectTimer=null;
+let localDraft=null,myPendingId=null;
+const uid=()=>([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
+const mod=s=>Math.floor((s-10)/2);
+const modStr=s=>{const m=mod(s);return(m>=0?"+":"")+m};
+const profBonus=lvl=>lvl<=4?2:lvl<=8?3:lvl<=12?4:lvl<=16?5:6;
+const totalLevel=char=>(char.classes||[{level:char.level||1}]).reduce((s,cl)=>s+(cl.level||0),0)||char.level||1;
+const primaryHitDie=char=>(char.classes&&char.classes[0]?.hitDie)||char.hitDie||'d10';
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const el=id=>document.getElementById(id);
+const hpC=pct=>pct>60?"#4a9e5c":pct>30?"#d4a017":"#c0392b";
+const hpG=pct=>pct>60?"0 0 20px rgba(74,158,92,.3)":pct>30?"0 0 20px rgba(212,160,23,.3)":"0 0 20px rgba(192,57,43,.5)";
+const isDM=()=>myRole==="dm";
+const canEdit=id=>isDM()||myRole===id;
+const allChars=()=>[...(session?.characters||[]),...(session?.npcs||[])];
+function blankChar(name=""){return{id:uid(),name,playerName:"",race:"Human",classes:[{class:"Fighter",subclass:"",level:1,hitDie:"d10"}],background:"",alignment:"True Neutral",xp:0,abilities:{STR:10,DEX:10,CON:10,INT:10,WIS:10,CHA:10},savingThrowProfs:{},skillProfs:{},hp:{max:10,current:10,temp:0},hitDiceCurrent:{},ac:10,speed:30,spellcastingAbility:"",spellSaveDC:8,spellAttackBonus:0,spellSlots:{},cantrips:[],spellList:{},concentrating:"",deathSaves:{successes:0,failures:0},exhaustion:0,conditions:[],inspiration:false,weapons:[],features:"",equipment:"",attunement:["","",""],languages:"",proficiencies:"",personalityTraits:"",ideals:"",bonds:"",flaws:"",notes:"",currency:{cp:0,sp:0,ep:0,gp:0,pp:0},portrait:"",portraitPending:"",isNPC:false};}
+let toastT=null;
+function toast(msg,type="info"){const t=el("toast");t.textContent=msg;t.className=type;t.style.display="block";clearTimeout(toastT);toastT=setTimeout(()=>t.style.display="none",3200);}
+function setWS(ok){el("ws-dot").className="ws-dot "+(ok?"live":"dead");el("ws-lbl").textContent=ok?"Live":"Reconnecting…";el("ws-lbl").style.color=ok?"var(--hp-high)":"var(--text3)";}
+function connectWS(url){
+  if(ws){try{ws.close();}catch{}}clearTimeout(reconnectTimer);
+  const wsUrl=url.replace(/^http/,"ws").replace(/\/$/,"");
+  ws=new WebSocket(wsUrl);
+  ws.onopen=()=>{setWS(true);ws.send(JSON.stringify({type:"IDENTIFY",role:myRole}));};
+  ws.onmessage=(e)=>{let m;try{m=JSON.parse(e.data);}catch{return;}
+    if(m.type==="WELCOME"){if(m.session){session=m.session;onReady();}}
+    else if(m.type==="SESSION_UPDATE"){session=m.session;refreshUI();}
+    else if(m.type==="PATCH_HP"){if(!session)return;const c=allChars().find(x=>x.id===m.charId);if(c){c.hp=m.hp;refreshSB();if(activeCharId===m.charId)refreshHP();}}
+    else if(m.type==="SESSION_WIPED"){session=null;toast("Session wiped","err");}
+    else if(m.type==="ERROR"){toast(m.error,"err");}
+    else if(m.type==="PLAYER_APPROVED"&&m.charId===myPendingId){myRole=myPendingId;el("waiting-screen").style.display="none";el("game-screen").style.display="flex";onReady();toast("You've been approved! Welcome to the party! 🎉","ok");}
+    else if(m.type==="PLAYER_REJECTED"&&m.pendingId===myPendingId){el("waiting-screen").style.display="none";el("builder-screen").style.display="flex";renderBuilder();toast(m.note?"DM says: "+m.note:"Profile sent back — please revise","err");}
+    };
+  ws.onclose=()=>{setWS(false);reconnectTimer=setTimeout(()=>connectWS(serverUrl),4500);};
+  ws.onerror=()=>setWS(false);
+}
+function wsSend(p){if(ws&&ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify({...p,dmPin:myPin}));}
+function mutate(fn){if(!session)return;fn(session);session.updatedAt=Date.now();wsSend({type:"SESSION_UPDATE",session});refreshUI();}
+let lRole="join";
+function setR(r){lRole=r;}
+
+
+window.addEventListener("load",()=>{
+  ["join-code","join-charname","join-playername"].forEach(id=>el(id)?.addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();}));
+});
+
+// ── PRE-CAMPAIGN BUILDER ───────────────────────────────────────
+function renderBuilder(){
+  const c=localDraft;if(!c)return;
+  el("builder-content").innerHTML=`<div class="g2">
+    <div>
+      <div class="sh">Portrait</div>
+      <div style="margin-bottom:13px">
+        ${c.portrait?`<img src="${c.portrait}" style="width:110px;height:138px;object-fit:cover;object-position:top;border:1px solid var(--iron3);margin-bottom:7px;display:block"/>`:
+        `<div style="width:110px;height:138px;border:1px dashed var(--iron3);display:flex;align-items:center;justify-content:center;font-size:38px;opacity:.2;margin-bottom:7px">🧙</div>`}
+        <label class="bsm" style="cursor:pointer;display:inline-block">📷 Upload<input type="file" accept="image/*" style="display:none" onchange="builderPort(this)"/></label>
+      </div>
+      <div class="sh">Identity</div>
+      ${[["Character Name","name"],["Player Name","playerName"],["Background","background"]].map(([l,f])=>`<div class="field"><label class="lbl">${l}</label><input value="${(c[f]||"").replace(/"/g,"&quot;")}" onchange="bSet('${f}',this.value)"/></div>`).join("")}
+      <div class="field"><label class="lbl">Alignment</label><select onchange="bSet('alignment',this.value)">${ALIGNMENTS.map(a=>`<option${a===c.alignment?" selected":""}>${a}</option>`).join("")}</select></div>
+      <div class="g2">
+        <div class="field"><label class="lbl">Race</label><select onchange="bSet('race',this.value)">${RACES.map(r=>`<option${r===c.race?" selected":""}>${r}</option>`).join("")}</select></div>
+        <div class="field"><label class="lbl">Class</label><select onchange="bClass('class',this.value)">${CLASSES.map(r=>`<option${r===((c.classes&&c.classes[0]?.class)||c.class)?" selected":""}>${r}</option>`).join("")}</select></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label class="lbl">Subclass</label><input value="${(c.classes&&c.classes[0]?.subclass)||c.subclass||""}" onchange="bClass('subclass',this.value)"/></div>
+        <div class="field"><label class="lbl">Level</label><input type="number" min="1" max="20" value="${(c.classes&&c.classes[0]?.level)||c.level||1}" onchange="bClass('level',clamp(+this.value,1,20))"/></div>
+      </div>
+      <div class="sh">Personality</div>
+      ${[["Traits","personalityTraits"],["Ideals","ideals"],["Bonds","bonds"],["Flaws","flaws"]].map(([l,f])=>`<div class="field"><label class="lbl">${l}</label><textarea onchange="bSet('${f}',this.value)">${c[f]||""}</textarea></div>`).join("")}
+      <div class="sh">Backstory</div>
+      <div class="field"><textarea onchange="bSet('notes',this.value)" style="min-height:90px">${c.notes||""}</textarea></div>
+    </div>
+    <div>
+      <div class="sh">Ability Scores</div>
+      <div class="ab-grid" style="margin-bottom:13px">${ABILITIES.map(ab=>`<div class="ab-block"><div class="ab-ab">${ab}</div>
+        <input class="ab-inp" type="number" min="1" max="30" value="${c.abilities[ab]}" onchange="bAb('${ab}',+this.value)"/>
+        <div class="ab-mod" id="b-mod-${ab}">${modStr(c.abilities[ab])}</div></div>`).join("")}</div>
+      <div class="sh">HP &amp; Combat</div>
+      <div class="flex" style="flex-wrap:wrap;margin-bottom:13px">
+        <div class="field"><label class="lbl">Max HP</label><input type="number" value="${c.hp.max}" style="width:70px" onchange="bSet('hp.max',+this.value)"/></div>
+        <div class="field"><label class="lbl">AC</label><input type="number" value="${c.ac}" style="width:60px" onchange="bSet('ac',+this.value)"/></div>
+        <div class="field"><label class="lbl">Speed</label><input type="number" value="${c.speed}" style="width:65px" onchange="bSet('speed',+this.value)"/></div>
+      </div>
+      <div class="sh">Saving Throw Profs</div>
+      <div class="flex" style="flex-wrap:wrap;margin-bottom:13px">
+        ${ABILITIES.map(ab=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;color:var(--text2);font-family:var(--f-head);font-size:10px;letter-spacing:1px"><input type="checkbox" ${c.savingThrowProfs?.[ab]?"checked":""} onchange="bST('${ab}',this.checked)"/>${ab}</label>`).join("")}
+      </div>
+      <div class="sh">Skill Proficiencies</div>
+      <div class="g2" style="margin-bottom:13px">${Object.entries(SKILLS).map(([s,ab])=>{const pl=c.skillProfs?.[s]||0;const ico=["◇","◈","◆"],cl=["n","p","e"];return`<div class="sk-row"><span class="sk-icon ${cl[pl]}" onclick="bCycSk('${s}',this)" style="cursor:pointer">${ico[pl]}</span><span style="flex:1;font-size:11px;color:var(--text2)">${s.replace(/([A-Z])/g," $1").trim()}</span><span style="font-family:var(--f-head);font-size:8px;color:var(--text4)">${ab}</span></div>`}).join("")}</div>
+      <div class="sh">Equipment</div>
+      <div class="field"><textarea onchange="bSet('equipment',this.value)" style="min-height:70px">${c.equipment||""}</textarea></div>
+      <div class="sh">Languages &amp; Proficiencies</div>
+      <div class="field"><textarea onchange="bSet('languages',this.value)" style="min-height:50px">${c.languages||""}</textarea></div>
+    </div>
+  </div>`;
+}
+function bSet(field,value){if(!localDraft)return;if(field.includes(".")){const[a,b]=field.split(".");localDraft[a]=localDraft[a]||{};localDraft[a][b]=value;}else localDraft[field]=value;}
+function bAb(ab,val){if(!localDraft)return;localDraft.abilities[ab]=clamp(val,1,30);const m=el("b-mod-"+ab);if(m)m.textContent=modStr(localDraft.abilities[ab]);}
+function bST(ab,val){if(!localDraft)return;localDraft.savingThrowProfs=localDraft.savingThrowProfs||{};localDraft.savingThrowProfs[ab]=val;}
+function bCycSk(skill,iconEl){if(!localDraft)return;localDraft.skillProfs=localDraft.skillProfs||{};const cur=localDraft.skillProfs[skill]||0,next=(cur+1)%3;localDraft.skillProfs[skill]=next;const ico=["◇","◈","◆"],cl=["n","p","e"];iconEl.textContent=ico[next];iconEl.className="sk-icon "+cl[next];}
+function bClass(field,value){if(!localDraft)return;localDraft.classes=localDraft.classes||[{class:"Fighter",subclass:"",level:1,hitDie:"d10"}];localDraft.classes[0][field]=value;}
+function builderPort(input){const f=input.files?.[0];if(!f)return;if(f.size>3*1024*1024){toast("Max 3MB","err");return;}const r=new FileReader();r.onload=e=>{localDraft.portrait=e.target.result;renderBuilder();};r.readAsDataURL(f);}
+async function submitProfile(){
+  if(!localDraft){toast("Nothing to submit","err");return;}
+  const serverUrl_=el("server-url")?.value||"wss://dnd-production-a09f.up.railway.app";
+  const http=serverUrl_.replace(/^ws/,"http");
+  try{
+    const r=await fetch(`${http}/session/submit-profile`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pendingId:myPendingId,profileDraft:localDraft,portraitPending:localDraft.portrait||""})});
+    const d=await r.json();if(!r.ok){toast(d.error||"Submit failed","err");return;}
+    el("builder-screen").style.display="none";el("waiting-screen").style.display="flex";
+    el("wait-status").textContent="Profile submitted — awaiting DM review";
+    toast("Profile submitted!","ok");
+  }catch(e){toast("Error: "+e.message,"err");}
+}
+function resubmit(){el("waiting-screen").style.display="none";el("builder-screen").style.display="flex";renderBuilder();}
+
+function onReady(){
+  if(!session)return;
+  el("camp-lbl").textContent=session.campaign;
+  el("role-badge").textContent=isDM()?"🎲 DM":"🧙 "+(allChars().find(c=>c.id===myRole)?.name||"Player");
+  if(isDM())el("dm-ctrl").style.display="flex";
+  refreshUI();
+  if(isDM()&&!session.characters?.length)showSetup();
+}
+function refreshUI(){
+  if(!session)return;
+  el("camp-lbl").textContent=session.campaign;
+  const cb=el("cmbt-btn");
+  if(session.combatActive){cb.classList.add("combat-on");cb.classList.remove("combat-off");cb.textContent="⚔ End Combat";}
+  else{cb.classList.remove("combat-on");cb.classList.add("combat-off");cb.textContent="⚔ Combat";}
+  el("round-wrap").style.display=session.combatActive?"flex":"none";
+  el("round-num").textContent=session.roundCounter;
+  const pending=allChars().filter(c=>c.portraitPending);
+  if(isDM()&&pending.length){el("appr-btn").style.display="";el("appr-cnt").textContent="("+pending.length+")";}else el("appr-btn").style.display="none";
+  refreshSB();
+  if(activeCharId)renderSheet(activeCharId);
+}
+function refreshSB(){
+  if(!session)return;
+  el("sb-players").innerHTML=(session.characters||[]).map(ccHTML).join("");
+  el("sb-npcs").innerHTML=(session.npcs||[]).map(ccHTML).join("");
+  el("sb-npc-wrap").style.display=(session.npcs?.length)?"block":"none";
+}
+function ccHTML(c){
+  const pct=c.hp.max>0?Math.max(0,c.hp.current/c.hp.max*100):0;
+  const isMe=myRole===c.id,active=activeCharId===c.id;
+  const ph=c.portrait?`<img src="${c.portrait}" style="width:100%;height:100%;object-fit:cover;object-position:top"/>`:`<span style="opacity:.3">${c.isNPC?"👹":"🧙"}</span>`;
+  return `<div class="cc${active?" active":""}" onclick="selectChar('${c.id}')">
+    <div class="cc-inner"><div class="cc-thumb">${ph}</div>
+    <div style="flex:1;min-width:0"><div class="cc-name">${c.name}${isMe?' <span style="color:var(--ember);font-size:9px">YOU</span>':""}</div>
+    <div class="cc-class">${c.race} ${c.class}</div><div class="cc-lvl">LVL ${totalLevel(c)}${c.isNPC?" · NPC":""}</div></div></div>
+    <div class="tbar"><div class="tfill" style="width:${pct}%;background:${hpC(pct)}"></div></div>
+    <div style="font-size:10px;color:var(--text4);margin-top:2px;font-family:var(--f-head);letter-spacing:1px">${c.hp.current}/${c.hp.max} HP${c.hp.temp>0?" +"+c.hp.temp+" TMP":""}</div>
+    ${c.conditions.length?`<div style="margin-top:3px">${c.conditions.slice(0,3).map(()=>`<span style="width:5px;height:5px;border-radius:50%;background:var(--blood2);display:inline-block;margin-right:2px"></span>`).join("")}</div>`:""}
+  </div>`;
+}
+function selectChar(id){activeCharId=id;refreshSB();el("empty-state").style.display="none";el("sheet-area").style.display="flex";renderSheet(id);}
+function renderSheet(charId){
+  const char=allChars().find(c=>c.id===charId);if(!char)return;
+  const ce=canEdit(charId);const lvl=totalLevel(char);const prof=profBonus(lvl);
+  const hpPct=char.hp.max>0?Math.max(0,char.hp.current/char.hp.max*100):0;
+  const hpLow=hpPct<=25;
+  const port=char.portrait||(char.portraitPending&&isDM()?char.portraitPending:"");
+  el("sheet-area").innerHTML=`<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div class="s-hero">
+      <div class="s-hero-bg"></div>
+      <div class="s-hero-portrait">${port?`<img style="width:100%;height:100%;object-fit:cover;object-position:top" src="${port}"/>`:`<div class="ph-placeholder">${char.isNPC?"👹":"🧙"}</div>`}${char.portraitPending&&isDM()?`<div style="position:absolute;top:8px;right:8px;font-family:var(--f-head);font-size:10px;letter-spacing:1px;background:rgba(212,160,23,.15);border:1px solid var(--hp-mid);color:var(--hp-mid);padding:3px 8px">⏳ Pending</div>`:""}</div>
+      <div class="s-hero-overlay"></div>
+      <div class="s-hero-content">
+        <div class="s-name${hpLow?" lowhp":""}">${char.name}${char.isNPC?`<span class="npc-badge">NPC</span>`:""}</div>
+        <div class="s-sub">${char.race} · ${char.class}${char.subclass?" · "+char.subclass:""}</div>
+        <div class="s-align">${char.alignment}${char.background?" · "+char.background:""}</div>
+        <div class="flex" style="margin-top:8px">
+          ${char.inspiration?`<div class="insp">✦ INSPIRED</div>`:""}
+          ${ce?`<button class="bsm" onclick="toggleInsp('${char.id}')" style="font-size:10px">${char.inspiration?"Remove Insp":"✦ Inspire"}</button>`:""}
+          ${ce?`<label class="bsm" style="font-size:10px;cursor:pointer">📷 Upload Art<input type="file" accept="image/*" style="display:none" onchange="handlePortrait('${char.id}',this)"/></label>`:""}
+          ${isDM()&&char.isNPC?`<button class="bsm danger" onclick="removeNPC('${char.id}')" style="font-size:10px">Remove NPC</button>`:""}
+        </div>
+      </div>
+    </div>
+    <div class="stats-ribbon">
+      <div class="sp"><div class="sp-lbl">Level</div><div class="sp-val">${lvl}</div><div class="sp-sub">XP ${char.xp}</div></div>
+      <div class="sp"><div class="sp-lbl">AC</div><div class="sp-val">${char.ac}</div></div>
+      <div class="sp"><div class="sp-lbl">Speed</div><div class="sp-val" style="font-size:16px">${char.speed}ft</div></div>
+      <div class="sp"><div class="sp-lbl">Prof Bonus</div><div class="sp-val">+${prof}</div></div>
+      <div class="sp"><div class="sp-lbl">Initiative</div><div class="sp-val">${modStr(char.abilities.DEX)}</div></div>
+      <div class="sp"><div class="sp-lbl">Passive Perc</div><div class="sp-val">${10+mod(char.abilities.WIS)+(char.skillProfs?.Perception?prof:0)}</div></div>
+    </div>
+    <div class="hps">
+      <div class="hp-outer" style="box-shadow:${hpG(hpPct)}"><div class="hp-fill" id="hp-fill" style="width:${hpPct}%;background:${hpC(hpPct)}"></div><div class="hp-text" id="hp-text">${char.hp.current} / ${char.hp.max}${char.hp.temp>0?" (+"+char.hp.temp+" TEMP)":""}</div></div>
+      ${ce?`<div class="hp-row">
+        <button class="bsm danger" onclick="hpD('${char.id}',-1)" style="font-size:16px;padding:3px 10px">−</button>
+        <button class="bsm" onclick="hpD('${char.id}',1)" style="color:var(--hp-high);border-color:rgba(74,158,92,.4);font-size:16px;padding:3px 10px">+</button>
+        <input type="number" id="hp-delta" placeholder="Amount" min="1" style="width:80px;margin-bottom:0"/>
+        <button class="btn danger" onclick="applyDmg('${char.id}')" style="padding:5px 12px">Damage</button>
+        <button class="btn" onclick="applyHeal('${char.id}')" style="padding:5px 12px;border-color:rgba(74,158,92,.5);color:var(--hp-high)">Heal</button>
+        <button class="bsm" onclick="showHPEdit('${char.id}')" style="font-size:10px">Edit Max/Temp</button>
+      </div>`:""}
+    </div>
+    <div class="conds-row">
+      ${char.conditions.map(c=>`<span class="ctag">${c}${ce?`<span class="crem" onclick="remCond('${char.id}','${c}')">×</span>`:""}</span>`).join("")}
+      ${ce?`<select onchange="addCond('${char.id}',this)" style="width:auto;padding:3px 8px;font-size:11px;margin-bottom:0;clip-path:none"><option value="">＋ Condition</option>${CONDITIONS.filter(c=>!char.conditions.includes(c)).map(c=>`<option>${c}</option>`).join("")}</select>`:""}
+      ${!char.conditions.length&&!ce?`<span style="font-size:12px;color:var(--text4);font-style:italic">No conditions</span>`:""}
+    </div>
+    ${char.hp.current===0?`<div class="dw">
+      <span style="font-family:var(--f-head);font-size:11px;letter-spacing:2px;color:var(--blood2)">DEATH SAVES</span>
+      <div class="flex" style="gap:4px"><span style="font-family:var(--f-head);font-size:10px;color:var(--hp-high)">✓</span>${[0,1,2].map(i=>`<div class="dpip s${i<(char.deathSaves.successes||0)?" lit":""}" style="color:var(--hp-high)" ${ce?`onclick="cycDS('${char.id}','successes',${i})"`:""} ></div>`).join("")}</div>
+      <div class="flex" style="gap:4px"><span style="font-family:var(--f-head);font-size:10px;color:var(--blood2)">✗</span>${[0,1,2].map(i=>`<div class="dpip f${i<(char.deathSaves.failures||0)?" lit":""}" style="color:var(--blood2)" ${ce?`onclick="cycDS('${char.id}','failures',${i})"`:""} ></div>`).join("")}</div>
+    </div>`:""}
+    <div class="tab-bar">${TABS.map(t=>`<button class="tbtn${activeTab===t.id?" active":""}" onclick="swTab('${char.id}','${t.id}')"><span class="ti">${t.icon}</span>${t.label}</button>`).join("")}</div>
+    <div class="tab-content">${renderTab(char,activeTab,ce,prof)}</div>
+  </div>`;
+}
+function swTab(id,tab){activeTab=tab;renderSheet(id);}
+function renderTab(char,tab,ce,prof){
+  if(tab==="core")return tabCore(char,ce,prof);if(tab==="combat")return tabCombat(char,ce,prof);
+  if(tab==="skills")return tabSkills(char,ce,prof);if(tab==="spells")return tabSpells(char,ce,prof);
+  if(tab==="gear")return tabGear(char,ce);if(tab==="notes")return tabNotes(char,ce);
+  if(tab==="log")return tabLog(char,ce);return "";
+}
+function tabCore(char,ce,prof){
+  const lvl=totalLevel(char);
+  const classes=char.classes||[{class:char.class||"Fighter",subclass:char.subclass||"",level:char.level||1,hitDie:char.hitDie||"d10"}];
+  const classBlock=ce?`
+    <div class="sh">Classes & Levels</div>
+    ${classes.map((cl,i)=>`<div class="multiclass-row">
+      <select style="flex:2;margin-bottom:0" onchange="updClass('${char.id}',${i},'class',this.value)">${CLASSES.map(x=>`<option${x===cl.class?" selected":""}>${x}</option>`).join("")}</select>
+      <input placeholder="Subclass" value="${cl.subclass||""}" style="flex:2;margin-bottom:0" onchange="updClass('${char.id}',${i},'subclass',this.value)"/>
+      <select style="width:60px;margin-bottom:0" onchange="updClass('${char.id}',${i},'hitDie',this.value)">${["d6","d8","d10","d12"].map(d=>`<option${d===cl.hitDie?" selected":""}>${d}</option>`).join("")}</select>
+      <input type="number" min="1" max="20" value="${cl.level}" style="width:52px;margin-bottom:0;text-align:center" onchange="updClass('${char.id}',${i},'level',+this.value)"/>
+      ${classes.length>1?`<button class="bsm danger" onclick="remClass('${char.id}',${i})">×</button>`:""}
+    </div>`).join("")}
+    ${classes.length<3?`<button class="bsm" onclick="addClassRow('${char.id}')" style="margin-top:6px">＋ Add Class</button>`:""}
+    <div style="font-family:var(--f-head);font-size:10px;color:var(--text3);margin-top:5px;letter-spacing:1px">Total Level: <span style="color:var(--gold2)">${lvl}</span> · Prof Bonus: <span style="color:var(--ember2)">+${prof}</span></div>`
+  :`<div class="sh">Classes</div>${classes.map(cl=>`<div style="font-family:var(--f-head);font-size:12px;color:var(--gold2);margin-bottom:3px">${cl.class}${cl.subclass?" — "+cl.subclass:""} <span style="color:var(--ember2)">Lv${cl.level} ${cl.hitDie}</span></div>`).join("")}`;
+  const exLvl=char.exhaustion||0;
+  const exhaustBlock=`<div class="sh">Exhaustion <span style="font-size:9px;color:var(--text4)">(Level ${exLvl}/6)</span></div>
+    <div class="exhaust-track">${[1,2,3,4,5,6].map(i=>`<div class="exhaust-pip${i<=exLvl?" active":""}" ${ce?`onclick="setExhaust('${char.id}',${i})"`:""} title="Level ${i}: ${EXHAUST_PENALTIES[i]}">${i}</div>`).join("")}
+    ${ce?`<button class="bsm" onclick="setExhaust('${char.id}',0)" style="font-size:9px;margin-left:4px">Clear</button>`:""}</div>
+    ${exLvl>0?`<div class="exhaust-penalty">${EXHAUST_PENALTIES[exLvl]}</div>`:""}`;
+  return `<div class="sh">Ability Scores</div><div class="ab-grid">${ABILITIES.map(ab=>`
+    <div class="ab-block"><div class="ab-ab">${ab}</div>
+    <div class="ab-score">${ce?`<input class="ab-inp" type="number" min="1" max="30" value="${char.abilities[ab]}" onchange="updAb('${char.id}','${ab}',+this.value)"/>`:char.abilities[ab]}</div>
+    <div class="ab-mod">${modStr(char.abilities[ab])}</div>
+    <div class="ab-save">Save ${modStr(char.abilities[ab]+(char.savingThrowProfs?.[ab]?prof:0))} ${char.savingThrowProfs?.[ab]?"●":""}</div>
+    </div>`).join("")}</div>
+  <div class="g2">
+    <div>
+      ${classBlock}
+      <div class="sh">Identity</div>
+      ${[["Race","race",RACES],["Background","background"],["Alignment","alignment",ALIGNMENTS],["Player Name","playerName"]].map(([l,f,opts])=>`<div class="field"><label class="lbl">${l}</label>${ce?(opts?`<select onchange="updC('${char.id}','${f}',this.value)">${opts.map(o=>`<option${o===char[f]?" selected":""}>${o}</option>`).join("")}</select>`:`<input value="${(char[f]||"").replace(/"/g,"&quot;")}" onchange="updC('${char.id}','${f}',this.value)"/>`):
+    `<div style="color:var(--text);font-size:14px">${char[f]||"—"}</div>`}</div>`).join("")}
+      <div class="field" style="margin-top:4px"><label class="lbl">XP</label>
+        ${ce?`<input type="number" min="0" value="${char.xp}" onchange="updXP('${char.id}',+this.value)"/>`:char.xp}
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">Next level: ${XP_THR[Math.min(lvl,19)].toLocaleString()} XP</div>
+      </div>
+      ${exhaustBlock}
+    </div>
+    <div><div class="sh">Personality</div>
+      ${[["Traits","personalityTraits"],["Ideals","ideals"],["Bonds","bonds"],["Flaws","flaws"]].map(([l,f])=>`<div class="field"><label class="lbl">${l}</label>${ce?`<textarea onchange="updC('${char.id}','${f}',this.value)">${char[f]||""}</textarea>`:`<div class="pre">${char[f]||"—"}</div>`}</div>`).join("")}
+    </div>
+  </div>`;
+}
+function tabCombat(char,ce,prof){
+  const classes=char.classes||[{class:char.class||"Fighter",subclass:"",level:char.level||1,hitDie:char.hitDie||"d10"}];
+  const lvl=totalLevel(char);
+  // Hit dice pool: one die per class level
+  const hdHTML=classes.map((cl,ci)=>{
+    const total=cl.level||0;
+    const used=(char.hitDiceCurrent?.[ci])||0;
+    const avail=Math.max(0,total-used);
+    const pips=Array.from({length:total}).map((_,pi)=>`<div class="hd-pip${pi<avail?" avail":" used"}" ${ce?`onclick="spendHD('${char.id}',${ci})"`:""} title="${pi<avail?"Click to spend":"Spent"}"></div>`).join("");
+    return `<div style="margin-bottom:6px"><div style="font-family:var(--f-head);font-size:10px;color:var(--text3);letter-spacing:1px;margin-bottom:3px">${cl.class} ${cl.hitDie} (${avail}/${total} remaining)</div><div class="hd-track">${pips}</div></div>`;
+  }).join("");
+  // Concentration
+  const concBlock=`<div class="sh">Concentration</div>
+    ${char.concentrating?`<div class="conc-badge">🔮 ${char.concentrating}</div>
+    ${ce?`<button class="bsm" onclick="updC('${char.id}','concentrating','')" style="margin-left:6px;font-size:9px">End</button>`:""}`:
+    ce?`<input id="conc-inp" placeholder="Spell name if concentrating…" value="${char.concentrating||""}" onchange="updC('${char.id}','concentrating',this.value)" style="margin-bottom:0"/>`:
+    `<div style="font-size:13px;color:var(--text4);font-style:italic">Not concentrating</div>`}`;
+  // Weapons
+  const weps=(char.weapons||[]).map((w,i)=>`<tr>
+    <td style="color:var(--gold2);font-family:var(--f-head)">${w.name}</td>
+    <td style="color:var(--ember2)">${w.atk}</td>
+    <td style="color:var(--ember2)">${w.dmg}</td>
+    <td style="color:var(--text3);font-size:11px">${w.dtype||""}</td>
+    <td style="color:var(--text4);font-size:10px;font-family:var(--f-head)">${w.props||""}</td>
+    ${ce?`<td><button class="bsm danger" onclick="remWeapon('${char.id}',${i})">×</button></td>`:""}
+  </tr>`).join("");
+  // Rests
+  const restBlock=ce?`<div class="sh">Rests</div>
+    <div class="flex" style="margin-bottom:14px">
+      <button class="rest-btn" onclick="shortRest('${char.id}')">🌙 Short Rest</button>
+      <button class="rest-btn long" onclick="longRest('${char.id}')">☀️ Long Rest</button>
+    </div>`:"";
+  return `<div class="sh">Stats</div><div class="flex" style="margin-bottom:14px">
+    ${[["Armour Class","ac"],["Speed (ft)","speed"]].map(([l,f])=>`<div class="field"><label class="lbl">${l}</label>${ce?`<input value="${char[f]}" onchange="updC('${char.id}','${f}',+this.value)" style="width:80px"/>`:
+    `<div style="font-family:var(--f-head);font-size:20px;color:var(--gold2)">${char[f]}</div>`}</div>`).join("")}
+    <div class="field"><label class="lbl">Carrying Capacity</label>
+      <div style="font-family:var(--f-head);font-size:13px;color:var(--text2)">${char.abilities.STR*15} lb max</div>
+    </div>
+  </div>
+  <div class="sh">Hit Dice</div>${hdHTML}
+  ${concBlock}
+  ${restBlock}
+  <div class="sh">Weapons & Attacks</div>
+  <table class="wtbl"><thead><tr><th>Weapon</th><th>Attack</th><th>Damage</th><th>Type</th><th>Properties</th>${ce?"<th></th>":""}</tr></thead>
+  <tbody>${weps||`<tr><td colspan="6" style="color:var(--text4);font-style:italic;padding:12px 8px">No weapons added</td></tr>`}</tbody></table>
+  ${ce?`<div class="flex" style="gap:5px;margin-bottom:14px;flex-wrap:wrap">
+    <input placeholder="Name" id="wnm" style="flex:2;margin-bottom:0;min-width:80px"/>
+    <input placeholder="+5" id="watk" style="flex:1;margin-bottom:0;min-width:44px"/>
+    <input placeholder="1d8+3" id="wdmg" style="flex:1;margin-bottom:0;min-width:60px"/>
+    <input placeholder="Type (piercing)" id="wdtype" style="flex:1;margin-bottom:0;min-width:80px"/>
+    <input placeholder="Properties (finesse)" id="wprops" style="flex:2;margin-bottom:0;min-width:80px"/>
+    <button class="btn primary" onclick="addWeapon('${char.id}')" style="padding:6px 10px">＋</button>
+  </div>`:""}
+  <div class="sh">Features & Traits</div>${ce?`<textarea onchange="updC('${char.id}','features',this.value)" style="min-height:100px;width:100%">${char.features||""}</textarea>`:`<div class="pre">${char.features||"—"}</div>`}`;
+}
+function tabSkills(char,ce,prof){
+  const icons=["◇","◈","◆"],cls=["n","p","e"];
+  const sk=Object.entries(SKILLS).map(([s,ab])=>{const pl=char.skillProfs?.[s]||0;const b=mod(char.abilities[ab])+(pl===2?prof*2:pl===1?prof:0);return `<div class="sk-row"><span class="sk-icon ${cls[pl]}" ${ce?`onclick="cycSk('${char.id}','${s}')" title="Click to toggle"`:""} >${icons[pl]}</span><span style="flex:1;font-size:13px;color:var(--text2)">${s.replace(/([A-Z])/g," $1").trim()}</span><span style="font-family:var(--f-head);font-size:10px;color:var(--text4)">${ab}</span><span style="font-family:var(--f-head);font-size:13px;color:var(--gold2);min-width:28px;text-align:right">${b>=0?"+":""}${b}</span></div>`;}).join("");
+  const st=ABILITIES.map(ab=>{const sv=mod(char.abilities[ab])+(char.savingThrowProfs?.[ab]?prof:0),p=char.savingThrowProfs?.[ab];return `<div class="sk-row"><span class="sk-icon ${p?"p":"n"}" ${ce?`onclick="togST('${char.id}','${ab}')"`:""} >${p?"◈":"◇"}</span><span style="flex:1;font-size:13px;color:var(--text2)">${ab} — ${ABILITY_FULL[ab]}</span><span style="font-family:var(--f-head);font-size:13px;color:var(--gold2);min-width:28px;text-align:right">${sv>=0?"+":""}${sv}</span></div>`;}).join("");
+  return `<div class="g2"><div><div class="sh">Skills <span style="font-size:9px;color:var(--text4)">◇ none ◈ prof ◆ expertise</span></div>${sk}</div><div><div class="sh">Saving Throws</div>${st}</div></div>`;
+}
+function tabSpells(char,ce,prof){
+  const lvl=totalLevel(char);
+  // Cantrips
+  const cantrips=char.cantrips||[];
+  const cantripBlock=`<div class="sh">Cantrips</div>
+    ${cantrips.map((sp,i)=>`<div class="spell-entry">
+      <span class="spell-name">${sp.name}</span>
+      <span class="spell-meta">${sp.castTime||"1 action"} · ${sp.range||"—"}</span>
+      ${ce?`<button class="bsm danger" onclick="removeCantrip('${char.id}',${i})" style="padding:2px 6px;font-size:10px">×</button>`:""}
+    </div>`).join("")}
+    ${ce?`<div class="flex" style="gap:5px;margin-top:6px">
+      <input id="cant-name" placeholder="Cantrip name" style="flex:2;margin-bottom:0"/>
+      <input id="cant-cast" placeholder="Cast time" style="flex:1;margin-bottom:0" value="1 action"/>
+      <input id="cant-range" placeholder="Range" style="flex:1;margin-bottom:0"/>
+      <button class="bsm" onclick="addCantrip('${char.id}')" style="font-size:10px">＋</button>
+    </div>`:""}`;
+  // Spell slots + spell list per level
+  const slots=Array.from({length:9},(_,i)=>i+1).map(lvl=>{
+    const s=char.spellSlots?.[lvl]||{max:0,used:0};
+    const avail=Math.max(0,(s.max||0)-(s.used||0));
+    const pips=s.max>0?Array.from({length:s.max}).map((_,pi)=>`<div class="spip${pi<avail?" avail":" used"}" ${ce?`onclick="togSlot('${char.id}',${lvl},${pi},${avail},${s.max})"`:""} ></div>`).join(""):"";
+    const spells=(char.spellList?.[lvl])||[];
+    const spellEntries=spells.map((sp,i)=>`<div class="spell-entry" style="padding-left:10px">
+      <span class="spell-name">${sp.name}</span>
+      ${sp.concentration?`<span class="spell-conc" title="Concentration">C</span>`:""}
+      <span class="spell-meta">${sp.castTime||"1A"} · ${sp.range||"—"} · ${sp.duration||"Instant"}</span>
+      ${ce?`<button class="bsm danger" onclick="removeSpell('${char.id}',${lvl},${i})" style="padding:2px 5px;font-size:9px">×</button>`:""}
+    </div>`).join("");
+    return `<div class="ssl-card" style="clip-path:none;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div class="ssl-lvl" style="margin-bottom:0;min-width:50px">Level ${lvl}</div>
+        ${ce?`<div class="flex" style="gap:3px"><input type="number" min="0" value="${s.max}" style="width:40px;padding:2px 4px;font-size:12px;margin-bottom:0" onchange="updSlotMax('${char.id}',${lvl},+this.value)"/><span style="color:var(--text4)">/</span><input type="number" min="0" value="${s.used}" style="width:40px;padding:2px 4px;font-size:12px;margin-bottom:0" onchange="updSlotUsed('${char.id}',${lvl},+this.value)"/></div>`:`<div style="font-family:var(--f-head);color:var(--gold2);font-size:14px">${avail}<span style="color:var(--text4);font-size:10px"> / ${s.max||0}</span></div>`}
+        <div class="slot-pips" style="margin-top:0">${pips}</div>
+      </div>
+      ${spellEntries}
+      ${ce&&s.max>0?`<div class="flex" style="gap:4px;margin-top:5px">
+        <input placeholder="Spell name" id="sp-name-${lvl}" style="flex:2;margin-bottom:0;font-size:12px;padding:4px 7px"/>
+        <input placeholder="Cast time" id="sp-cast-${lvl}" value="1 action" style="flex:1;margin-bottom:0;font-size:12px;padding:4px 7px"/>
+        <input placeholder="Range" id="sp-range-${lvl}" style="flex:1;margin-bottom:0;font-size:12px;padding:4px 7px"/>
+        <input placeholder="Duration" id="sp-dur-${lvl}" style="flex:1;margin-bottom:0;font-size:12px;padding:4px 7px"/>
+        <label style="display:flex;align-items:center;gap:3px;font-family:var(--f-head);font-size:9px;color:var(--text3);cursor:pointer"><input type="checkbox" id="sp-conc-${lvl}"/> C</label>
+        <button class="bsm" onclick="addSpell('${char.id}',${lvl})" style="font-size:9px">＋</button>
+      </div>`:""}
+    </div>`;
+  }).join("");
+  return `<div class="sh">Spellcasting</div><div class="flex" style="margin-bottom:14px">
+    <div class="field"><label class="lbl">Casting Ability</label>${ce?`<select onchange="updC('${char.id}','spellcastingAbility',this.value)" style="width:auto"><option value="">—</option>${ABILITIES.map(a=>`<option${a===char.spellcastingAbility?" selected":""}>${a}</option>`).join("")}</select>`:`<div style="font-family:var(--f-head)">${char.spellcastingAbility||"—"}</div>`}</div>
+    <div class="field"><label class="lbl">Spell Save DC</label>${ce?`<input type="number" value="${char.spellSaveDC}" style="width:65px" onchange="updC('${char.id}','spellSaveDC',+this.value)"/>`:`<div style="font-family:var(--f-head)">${char.spellSaveDC}</div>`}</div>
+    <div class="field"><label class="lbl">Spell Attack</label>${ce?`<input type="number" value="${char.spellAttackBonus}" style="width:65px" onchange="updC('${char.id}','spellAttackBonus',+this.value)"/>`:`<div style="font-family:var(--f-head)">${char.spellAttackBonus>=0?"+":""}${char.spellAttackBonus}</div>`}</div>
+  </div>
+  ${cantripBlock}
+  <div class="sh">Spell Slots & Spells</div>${slots}`;
+}
+function tabGear(char,ce){
+  const coins=[["CP","cp","#cd7f32"],["SP","sp","#bdbdbd"],["EP","ep","#6baed6"],["GP","gp","#ffd700"],["PP","pp","#ce93d8"]];
+  const attunement=char.attunement||["","",""];
+  const carryMax=char.abilities.STR*15;
+  return `<div class="sh">Currency</div><div class="cbar">${coins.map(([l,f,col])=>`<div class="coin"><div class="coin-lbl" style="color:${col}">${l}</div>${ce?`<input class="coin-inp" type="number" min="0" value="${char.currency?.[f]||0}" onchange="updCurr('${char.id}','${f}',+this.value)" style="color:${col}"/>`:`<div style="font-family:var(--f-head);font-size:20px;color:${col}">${char.currency?.[f]||0}</div>`}</div>`).join("")}</div>
+  <div class="sh">Attunement Slots <span style="font-size:9px;color:var(--text4)">(max 3)</span></div>
+  ${attunement.map((item,i)=>`<div class="attune-slot${item?" filled":""}">
+    <span class="attune-slot-num">⧖ ${i+1}</span>
+    ${ce?`<input value="${item||""}" placeholder="Attuned item…" style="flex:1;margin-bottom:0;background:transparent;border:none;border-bottom:1px solid var(--iron3);clip-path:none" onchange="updAttune('${char.id}',${i},this.value)"/>`:
+    `<span class="attune-item">${item||`<span style="color:var(--text4);font-style:italic">Empty</span>`}</span>`}
+  </div>`).join("")}
+  <div class="sh">Carrying Capacity <span style="font-size:9px;color:var(--text4)">(STR × 15 = ${carryMax} lb)</span></div>
+  <div style="font-size:12px;color:var(--text3);margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+      <span>Encumbered above ${Math.floor(carryMax/3)} lb · Heavily encumbered above ${Math.floor(carryMax*2/3)} lb</span>
+    </div>
+  </div>
+  <div class="sh">Equipment & Inventory</div>${ce?`<textarea onchange="updC('${char.id}','equipment',this.value)" style="min-height:120px;width:100%">${char.equipment||""}</textarea>`:`<div class="pre">${char.equipment||"—"}</div>`}
+  <div class="g2" style="margin-top:0"><div><div class="sh">Languages</div>${ce?`<textarea onchange="updC('${char.id}','languages',this.value)" style="min-height:60px">${char.languages||""}</textarea>`:`<div class="pre">${char.languages||"—"}</div>`}</div>
+  <div><div class="sh">Other Proficiencies</div>${ce?`<textarea onchange="updC('${char.id}','proficiencies',this.value)" style="min-height:60px">${char.proficiencies||""}</textarea>`:`<div class="pre">${char.proficiencies||"—"}</div>`}</div></div>`;
+}
+function tabNotes(char,ce){return `<div class="sh">Character Notes & Backstory</div>${ce?`<textarea onchange="updC('${char.id}','notes',this.value)" style="min-height:260px;width:100%">${char.notes||""}</textarea>`:`<div class="pre" style="min-height:120px">${char.notes||"—"}</div>`}`;}
+function tabLog(char,ce){
+  const entries=(session?.sessionLog||[]);
+  return`<div class="sh">Session Log</div>
+    <div id="log-area" style="max-height:300px;overflow-y:auto;margin-bottom:10px">${entries.length?entries.map(e=>`<div class="log-entry ${e.type||"log"}">
+      <span class="let">${fmtT(e.ts)}</span><span class="lea">${e.author}</span><span class="leb">${e.text}</span></div>`).join(""):
+    `<div style="color:var(--text4);font-style:italic;font-size:13px;margin-top:8px">No log entries yet.</div>`}</div>
+    ${(isDM()||ce)?`<div class="flex" style="gap:5px"><input id="log-inp" placeholder="Add note to session log…" style="flex:1;margin-bottom:0" onkeydown="if(event.key==='Enter')sendLog(this)"/><button class="btn primary" onclick="sendLog(el('log-inp'))" style="padding:5px 12px">Post</button></div>`:""}
+    <div style="margin-top:8px;font-size:11px;color:var(--text4)">🎲 Dice rolls appear here automatically.</div>`;
+}
+
+
+
+// ── HP ─────────────────────────────────────────────────────────
+function refreshHP(){const c=allChars().find(x=>x.id===activeCharId);if(!c)return;const pct=c.hp.max>0?Math.max(0,c.hp.current/c.hp.max*100):0;const f=el("hp-fill"),t=el("hp-text");if(f){f.style.width=pct+"%";f.style.background=hpC(pct);}if(t)t.textContent=`${c.hp.current} / ${c.hp.max}${c.hp.temp>0?" (+"+c.hp.temp+" TEMP)":""}`;}
+function hpD(id,d){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c)c.hp.current=clamp(c.hp.current+d,0,c.hp.max+(c.hp.temp||0));});}
+function applyDmg(id){const v=parseInt(el("hp-delta")?.value||0);if(v<=0)return;mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c)c.hp.current=clamp(c.hp.current-v,0,c.hp.max+(c.hp.temp||0));});if(el("hp-delta"))el("hp-delta").value="";}
+function applyHeal(id){const v=parseInt(el("hp-delta")?.value||0);if(v<=0)return;mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c)c.hp.current=clamp(c.hp.current+v,0,c.hp.max);});if(el("hp-delta"))el("hp-delta").value="";}
+function showHPEdit(id){const c=allChars().find(x=>x.id===id);if(!c)return;el("modal-root").innerHTML=`<div class="mbg" onclick="if(event.target===this)closeM()"><div class="mbox" style="max-width:330px"><div class="mtitle">Edit HP</div><div class="field"><label class="lbl">Max HP</label><input id="hpe-max" type="number" value="${c.hp.max}"/></div><div class="field"><label class="lbl">Current HP</label><input id="hpe-cur" type="number" value="${c.hp.current}"/></div><div class="field"><label class="lbl">Temp HP</label><input id="hpe-tmp" type="number" value="${c.hp.temp||0}"/></div><div class="flex" style="margin-top:9px"><button class="btn primary" onclick="saveHPE('${id}')">Save</button><button class="bsm" onclick="closeM()">Cancel</button></div></div></div>`;}
+function saveHPE(id){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c){c.hp.max=parseInt(el("hpe-max")?.value||c.hp.max);c.hp.current=parseInt(el("hpe-cur")?.value||c.hp.current);c.hp.temp=parseInt(el("hpe-tmp")?.value||0);}});closeM();}
+
+// ── CHAR MUTATIONS ─────────────────────────────────────────────
+function updC(id,f,v){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c)c[f]=v;});}
+function updAb(id,ab,v){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c)c.abilities[ab]=clamp(v,1,30);});}
+function updCurr(id,f,v){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c){c.currency=c.currency||{};c.currency[f]=v;}});}
+function updSlotMax(id,lvl,v){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c){c.spellSlots=c.spellSlots||{};c.spellSlots[lvl]={...(c.spellSlots[lvl]||{used:0}),max:v};}});}
+function updSlotUsed(id,lvl,v){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c){c.spellSlots=c.spellSlots||{};c.spellSlots[lvl]={...(c.spellSlots[lvl]||{max:0}),used:v};}});}
+// ── MULTICLASS ──────────────────────────────────────────────────
+function updClass(charId,idx,field,value){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(!c)return;c.classes=c.classes||[{class:"Fighter",subclass:"",level:1,hitDie:"d10"}];if(c.classes[idx])c.classes[idx][field]=value;});}
+function addClassRow(charId){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(!c)return;c.classes=c.classes||[];if(c.classes.length<3)c.classes.push({class:"Fighter",subclass:"",level:1,hitDie:"d10"});});}
+function remClass(charId,idx){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(!c)return;c.classes=c.classes||[];if(c.classes.length>1)c.classes.splice(idx,1);});}
+
+// ── EXHAUSTION ──────────────────────────────────────────────────
+function setExhaust(charId,lvl){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(c)c.exhaustion=lvl;});}
+
+// ── HIT DICE ───────────────────────────────────────────────────
+function spendHD(charId,classIdx){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(!c)return;c.hitDiceCurrent=c.hitDiceCurrent||{};const cl=c.classes?.[classIdx];if(!cl)return;const used=(c.hitDiceCurrent[classIdx]||0);if(used>=cl.level)return;c.hitDiceCurrent[classIdx]=used+1;// Roll the hit die and add CON mod, heal up to max
+const sides=parseInt((cl.hitDie||"d8").slice(1));const roll=Math.floor(Math.random()*sides)+1+mod(c.abilities.CON);c.hp.current=Math.min(c.hp.max,c.hp.current+Math.max(1,roll));toast(`Spent ${cl.hitDie}: healed ${Math.max(1,roll)} HP`,"ok");});}
+
+// ── RESTS ──────────────────────────────────────────────────────
+function shortRest(charId){const c=allChars().find(x=>x.id===charId);if(!c)return;toast("Short rest — spend hit dice above to heal","info");}
+function longRest(charId){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(!c)return;
+  // Full HP recovery
+  c.hp.current=c.hp.max;c.hp.temp=0;
+  // Recover all spell slots
+  Object.keys(c.spellSlots||{}).forEach(lvl=>{if(c.spellSlots[lvl])c.spellSlots[lvl].used=0;});
+  // Recover half hit dice (round up)
+  const classes=c.classes||[{class:"Fighter",level:c.level||1,hitDie:c.hitDie||"d10"}];
+  c.hitDiceCurrent=c.hitDiceCurrent||{};
+  classes.forEach((cl,i)=>{const used=c.hitDiceCurrent[i]||0;const recover=Math.ceil(cl.level/2);c.hitDiceCurrent[i]=Math.max(0,used-recover);});
+  // Clear exhaustion by 1
+  if(c.exhaustion>0)c.exhaustion--;
+  // Clear death saves
+  c.deathSaves={successes:0,failures:0};
+  toast("Long rest complete — HP, spell slots & hit dice restored","ok");});}
+
+// ── SPELLS ─────────────────────────────────────────────────────
+function addCantrip(charId){const name=el("cant-name")?.value?.trim();if(!name)return;const castTime=el("cant-cast")?.value||"1 action";const range=el("cant-range")?.value||"—";mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(c){c.cantrips=c.cantrips||[];c.cantrips.push({name,castTime,range});}});el("cant-name").value="";}
+function removeCantrip(charId,idx){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(c){c.cantrips=c.cantrips||[];c.cantrips.splice(idx,1);}});}
+function addSpell(charId,lvl){const name=el(`sp-name-${lvl}`)?.value?.trim();if(!name)return;const castTime=el(`sp-cast-${lvl}`)?.value||"1 action";const range=el(`sp-range-${lvl}`)?.value||"—";const duration=el(`sp-dur-${lvl}`)?.value||"Instant";const concentration=el(`sp-conc-${lvl}`)?.checked||false;mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(c){c.spellList=c.spellList||{};c.spellList[lvl]=c.spellList[lvl]||[];c.spellList[lvl].push({name,castTime,range,duration,concentration});}});if(el(`sp-name-${lvl}`))el(`sp-name-${lvl}`).value="";}
+function removeSpell(charId,lvl,idx){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(c){c.spellList=c.spellList||{};c.spellList[lvl]=c.spellList[lvl]||[];c.spellList[lvl].splice(idx,1);}});}
+
+// ── ATTUNEMENT ─────────────────────────────────────────────────
+function updAttune(charId,idx,value){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(c){c.attunement=c.attunement||["","",""];c.attunement[idx]=value;}});}
+
+// ── UPDATED addWeapon (with dtype + props) ──────────────────────
+function addWeapon(charId){const w={name:el("wnm")?.value?.trim(),atk:el("watk")?.value?.trim(),dmg:el("wdmg")?.value?.trim(),dtype:el("wdtype")?.value?.trim()||"",props:el("wprops")?.value?.trim()||""};if(!w.name)return;mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(c){c.weapons=c.weapons||[];c.weapons.push(w);}});}
+
+// ── XP → level auto-calc ───────────────────────────────────────
+function updXP(charId,val){const char=allChars().find(c=>c.id===charId);if(!char)return;const prevLvl=totalLevel(char);const newLvl=XP_THR.findIndex((x,i)=>val<(XP_THR[i+1]||Infinity));mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(c){c.xp=val;if(newLvl>0&&newLvl!==prevLvl&&c.classes){c.classes[0].level=newLvl;}}});} 
+
+// ── LOG ────────────────────────────────────────────────────────
+function sendLog(inputOrText,type="log"){
+  if(!session)return;
+  const text=typeof inputOrText==="string"?inputOrText:(inputOrText?.value||"").trim();
+  if(!text)return;
+  const author=isDM()?"DM":(allChars().find(c=>c.id===myRole)?.name||"Player");
+  wsSend({type:"LOG_MSG",author,text,logType:type});
+  if(typeof inputOrText==="object"&&inputOrText?.value!==undefined)inputOrText.value="";
+}
+
+function fmtT(ts){const d=new Date(ts);return`${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`;}
+
+function updLevel(id,val){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c)c.level=clamp(val,1,20);});}
+function addCond(id,sel){if(sel.value){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c&&!c.conditions.includes(sel.value))c.conditions.push(sel.value);});sel.value="";}}
+function remCond(id,cond){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c)c.conditions=c.conditions.filter(x=>x!==cond);});}
+function toggleInsp(id){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c)c.inspiration=!c.inspiration;});}
+function cycDS(id,f,i){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c){const cur=c.deathSaves[f]||0;c.deathSaves[f]=cur===i+1?i:i+1;}});}
+function cycSk(id,sk){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c){c.skillProfs=c.skillProfs||{};c.skillProfs[sk]=((c.skillProfs[sk]||0)+1)%3;}});}
+function togST(id,ab){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c){c.savingThrowProfs=c.savingThrowProfs||{};c.savingThrowProfs[ab]=!c.savingThrowProfs[ab];}});}
+function remWeapon(id,i){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c){c.weapons=c.weapons||[];c.weapons.splice(i,1);}});}
+function togSlot(id,lvl,i,avail,max){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(!c)return;c.spellSlots=c.spellSlots||{};c.spellSlots[lvl]=c.spellSlots[lvl]||{max,used:0};const sl=c.spellSlots[lvl];if(i<avail)sl.used=Math.min(sl.max,sl.used+1);else sl.used=Math.max(0,sl.used-1);});}
+
+// ── PORTRAIT ───────────────────────────────────────────────────
+function handlePortrait(charId,input){const f=input.files?.[0];if(!f)return;if(f.size>3*1024*1024){toast("Max 3MB","err");return;}const r=new FileReader();r.onload=e=>{const data=e.target.result;if(isDM()){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(c){c.portrait=data;c.portraitPending="";}});toast("Portrait set!","ok");}else{mutate(s=>{const c=s.characters.find(x=>x.id===charId);if(c)c.portraitPending=data;});toast("Portrait submitted — awaiting DM approval","info");}};r.readAsDataURL(f);}
+
+// ── APPROVALS ──────────────────────────────────────────────────
+function showApprovals(){
+  const pendProf=(session.pendingPlayers||[]).filter(p=>p.status==="submitted");
+  const pendPort=allChars().filter(c=>c.portraitPending);
+  if(!pendProf.length&&!pendPort.length){toast("Nothing to review","info");return;}
+  el("modal-root").innerHTML=`<div class="mbg" onclick="if(event.target===this)closeM()"><div class="mbox">
+    <div class="mtitle">📋 DM Review Queue</div>
+    ${pendProf.length?`<div class="sh">Full Profile Submissions</div>
+    ${pendProf.map(p=>{const d=p.profileDraft||{};return`<div class="acard">
+      <div class="flex" style="gap:12px;align-items:flex-start">
+        ${p.portraitPending?`<img src="${p.portraitPending}" style="width:85px;height:106px;object-fit:cover;object-position:top;border:1px solid var(--iron3);flex-shrink:0"/>`:
+        `<div style="width:85px;height:106px;border:1px dashed var(--iron3);display:flex;align-items:center;justify-content:center;font-size:30px;opacity:.2;flex-shrink:0">🧙</div>`}
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--f-head);font-size:14px;color:var(--gold2);margin-bottom:2px">${p.name} <span style="font-size:10px;color:var(--text3)">${p.playerName?"("+p.playerName+")":""}</span></div>
+          <div style="font-size:11px;color:var(--ember2);margin-bottom:7px">${d.race||"?"} ${d.class||"?"} ${d.subclass?"· "+d.subclass:""} — Level ${d.level||1}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px">${ABILITIES.map(ab=>`<span style="font-family:var(--f-head);font-size:10px;color:var(--text3)">${ab} <span style="color:var(--gold2)">${d.abilities?.[ab]||10}</span> <span style="color:var(--ember2)">${modStr(d.abilities?.[ab]||10)}</span></span>`).join("")}</div>
+          ${d.personalityTraits?`<div style="font-size:12px;color:var(--text3);margin-bottom:3px"><strong style="color:var(--text4);font-family:var(--f-head);font-size:8px;letter-spacing:1px">TRAITS</strong> ${d.personalityTraits}</div>`:""}
+          ${d.notes?`<div style="font-size:12px;color:var(--text3);margin-bottom:7px"><strong style="color:var(--text4);font-family:var(--f-head);font-size:8px;letter-spacing:1px">BACKSTORY</strong> ${d.notes.slice(0,180)}${d.notes.length>180?"…":""}</div>`:""}
+          <div class="flex"><button class="btn success" onclick="approveProf('${p.id}')">✓ Approve</button><button class="btn danger" onclick="rejectProf('${p.id}')">✗ Reject</button></div>
+        </div>
+      </div>
+    </div>`;}).join("")}`:""}
+    ${pendPort.length?`<div class="sh">Portrait Submissions</div>
+    ${pendPort.map(c=>`<div class="acard"><div class="flex" style="gap:12px;align-items:flex-start">
+      <img src="${c.portraitPending}" style="width:85px;height:106px;object-fit:cover;object-position:top;border:1px solid var(--iron3);flex-shrink:0"/>
+      <div><div style="font-family:var(--f-head);font-size:14px;color:var(--gold2);margin-bottom:5px">${c.name}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px">${c.race} ${c.class} — Lv${c.level}</div>
+      <div class="flex"><button class="btn success" onclick="apprPort('${c.id}');closeM();showApprovals()">✓ Approve</button><button class="btn danger" onclick="rejPort('${c.id}');closeM();showApprovals()">✗ Reject</button></div></div>
+    </div></div>`).join("")}`:""}
+    <button class="bsm" onclick="closeM()" style="margin-top:8px">Close</button>
+  </div></div>`;
+}
+async function approveProf(pendingId){
+  const http=serverUrl.replace(/^ws/,"http");
+  try{const r=await fetch(`${http}/session/approve`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dmPin:myPin,pendingId,approve:true})});const d=await r.json();if(!r.ok){toast(d.error,"err");return;}toast("Player approved!","ok");closeM();}
+  catch(e){toast("Error: "+e.message,"err");}
+}
+async function rejectProf(pendingId){
+  const note=prompt("Optional note to player:")||"";const http=serverUrl.replace(/^ws/,"http");
+  try{const r=await fetch(`${http}/session/approve`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dmPin:myPin,pendingId,approve:false,rejectNote:note})});const d=await r.json();if(!r.ok){toast(d.error,"err");return;}toast("Profile sent back","warn");closeM();}
+  catch(e){toast("Error: "+e.message,"err");}
+}
+function apprPort(id){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c){c.portrait=c.portraitPending;c.portraitPending="";}});toast("Portrait approved!","ok");}
+function rejPort(id){mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===id);if(c)c.portraitPending="";});toast("Portrait rejected","warn");}
+
+// ── DICE ───────────────────────────────────────────────────────
+let diceOpen=false;
+function toggleDice(){diceOpen=!diceOpen;el("dice-panel").classList.toggle("open",diceOpen);}
+function rollDie(sides){
+  const count=parseInt(el("dice-cnt")?.value||1);const modifier=parseInt(el("dice-mod")?.value||0);
+  const rolls=Array.from({length:count},()=>Math.floor(Math.random()*sides)+1);
+  const total=rolls.reduce((a,b)=>a+b,0)+modifier;
+  const isCrit=sides===20&&count===1&&rolls[0]===20;
+  const isFumble=sides===20&&count===1&&rolls[0]===1;
+  const res=el("dice-res");
+  res.textContent=total+(modifier!==0?` (${rolls.join("+")}${modifier>=0?"+":""}${modifier})`:`(${rolls.join("+")})`);
+  res.className="dice-result"+(isCrit?" crit":isFumble?" fumble":"");
+  document.querySelectorAll(".die-btn").forEach(b=>{if(b.textContent==="d"+sides||b.textContent==="d%"&&sides===100){b.classList.add("rolling");setTimeout(()=>b.classList.remove("rolling"),400);}});
+  const charName=allChars().find(c=>c.id===myRole)?.name||(isDM()?"DM":"Player");
+  const text=`rolled ${count}d${sides}${modifier!==0?(modifier>0?"+":"")+modifier:""} = ${total}${isCrit?" 🎉 CRITICAL!":isFumble?" 💀 FUMBLE!":""}`;
+  wsSend({type:"ROLL",author:charName,text});
+  const logEl=el("dice-log");
+  if(logEl){const e=document.createElement("div");e.className="dl-entry";e.innerHTML=`<span class="da">${charName}</span> ${text}`;logEl.prepend(e);if(logEl.children.length>15)logEl.lastChild?.remove();}
+}
+
+// ── LEVEL UP ───────────────────────────────────────────────────
+function showLU(char){el("lu-sub").textContent=`${char.name} reaches Level ${char.level}!`;el("lu-overlay").style.display="flex";}
+
+// ── COMBAT + PHASE ─────────────────────────────────────────────
+function togglePhase(){mutate(s=>{s.phase=s.phase==="setup"?"active":"setup";});}
+function toggleCombat(){
+  const starting=!session.combatActive;
+  mutate(s=>{s.combatActive=!s.combatActive;if(!s.combatActive){s.roundCounter=1;s.initiativeTurn=0;}});
+  if(starting)showInitSetup();
+}
+
+// ── NPC ─────────────────────────────────────────────────────────
+function showAddNPC(){el("modal-root").innerHTML=`<div class="mbg" onclick="if(event.target===this)closeM()"><div class="mbox" style="max-width:370px"><div class="mtitle">Add Enemy / NPC</div><div class="field"><label class="lbl">Name</label><input id="npc-nm" autofocus onkeydown="if(event.key==='Enter')doNPC()"/></div><div class="g2"><div class="field"><label class="lbl">Max HP</label><input id="npc-hp" type="number" value="30"/></div><div class="field"><label class="lbl">AC</label><input id="npc-ac" type="number" value="13"/></div></div><div class="field"><label class="lbl">CR / Notes</label><input id="npc-cr" placeholder="e.g. CR 2, undead"/></div><div class="flex" style="margin-top:9px"><button class="btn primary" onclick="doNPC()">Add</button><button class="bsm" onclick="closeM()">Cancel</button></div></div></div>`;setTimeout(()=>el("npc-nm")?.focus(),50);}
+function doNPC(){const name=(el("npc-nm")?.value||"").trim();if(!name)return;const hp=parseInt(el("npc-hp")?.value||30),ac=parseInt(el("npc-ac")?.value||13),cr=(el("npc-cr")?.value||"").trim();const npc=blankChar(name);npc.isNPC=true;npc.hp={max:hp,current:hp,temp:0};npc.ac=ac;npc.notes=cr;mutate(s=>{s.npcs=s.npcs||[];s.npcs.push(npc);});activeCharId=npc.id;closeM();}
+function removeNPC(id){mutate(s=>{s.npcs=s.npcs.filter(n=>n.id!==id);});activeCharId=null;el("empty-state").style.display="flex";el("sheet-area").style.display="none";}
+
+// ── SETUP MODAL ─────────────────────────────────────────────────
+function showSetup(){
+  const chars=session?.characters||[];const code=session?.joinCode||"—";
+  el("modal-root").innerHTML=`<div class="mbg" onclick="if(event.target===this)closeM()"><div class="mbox"><div class="mtitle">⚙ Campaign Setup</div>
+    <div class="ibox" style="margin-bottom:14px"><div class="ibox-t">🗺 Player Join Code</div>
+    <div class="ibox-b">Share this with players so they can join and build their characters:<br/><strong style="font-family:var(--f-title);font-size:26px;letter-spacing:6px;color:var(--gold3)">${code}</strong></div></div>
+    <div class="field"><label class="lbl">Campaign Name</label><input id="s-camp" value="${session?.campaign||""}" onchange="mutate(s=>{s.campaign=this.value;});el('camp-lbl').textContent=this.value;"/></div>
+    <div class="sh">Player Characters</div>
+    <div id="s-chars">${chars.filter(c=>!c.isNPC).map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--iron2)">
+      <div class="flex" style="gap:7px">
+        <div style="width:30px;height:37px;border:1px solid var(--iron3);background:var(--obsidian);display:flex;align-items:center;justify-content:center;overflow:hidden;clip-path:polygon(0 0,calc(100% - 3px) 0,100% 3px,100% 100%,3px 100%,0 calc(100% - 3px))">${c.portrait?`<img src="${c.portrait}" style="width:100%;height:100%;object-fit:cover"/>`:"🧙"}</div>
+        <div><div style="font-family:var(--f-head);color:var(--gold2)">${c.name}</div><div style="font-size:11px;color:var(--text3)">${c.race} ${c.class} · Lv${c.level}</div></div>
+      </div>
+      <div class="flex"><button class="bsm" onclick="closeM();showFullEdit('${c.id}')">Configure</button><button class="bsm danger" onclick="delChar('${c.id}')">Remove</button></div>
+    </div>`).join("")}</div>
+    <div class="flex" style="margin-top:10px"><input id="s-new" placeholder="Add character manually…" style="flex:1;margin-bottom:0" onkeydown="if(event.key==='Enter')addChar()"/><button class="btn primary" onclick="addChar()">＋ Add</button></div>
+    <button class="btn" style="width:100%;padding:10px;margin-top:12px" onclick="closeM()">⚔ Done</button>
+  </div></div>`;
+}
+function addChar(){const n=(el("s-new")?.value||"").trim();if(!n)return;mutate(s=>{s.characters.push(blankChar(n));});closeM();showSetup();}
+function delChar(id){mutate(s=>{s.characters=s.characters.filter(c=>c.id!==id);});if(activeCharId===id)activeCharId=null;closeM();showSetup();}
+
+// ── FULL EDIT MODAL ─────────────────────────────────────────────
+function showFullEdit(charId){
+  const orig=allChars().find(c=>c.id===charId);if(!orig)return;
+  el("modal-root").innerHTML=`<div class="mbg"><div class="mbox" id="fe-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="mtitle" style="margin-bottom:0">Configure: ${orig.name}</div>
+      <div class="flex"><button class="btn primary" onclick="saveFullEdit('${charId}')">Save</button><button class="bsm" onclick="closeM()">Cancel</button></div>
+    </div>
+    <div class="g2">
+      <div><div class="sh">Identity</div>
+        ${[["Race","fe-race",RACES,orig.race],["Class","fe-class",CLASSES,orig.class],["Subclass","fe-subclass",null,orig.subclass],["Background","fe-bg",null,orig.background],["Alignment","fe-align",ALIGNMENTS,orig.alignment],["Player Name","fe-player",null,orig.playerName]].map(([l,id,opts,val])=>`<div class="field"><label class="lbl">${l}</label>${opts?`<select id="${id}">${opts.map(o=>`<option${o===val?" selected":""}>${o}</option>`).join("")}</select>`:`<input id="${id}" value="${(val||"").replace(/"/g,"&quot;")}"/>`}</div>`).join("")}
+        <div class="flex"><div class="field" style="flex:1"><label class="lbl">Level</label><input id="fe-level" type="number" min="1" max="20" value="${orig.level}"/></div><div class="field" style="flex:1"><label class="lbl">XP</label><input id="fe-xp" type="number" min="0" value="${orig.xp}"/></div></div>
+      </div>
+      <div><div class="sh">Ability Scores</div>
+        <div class="ab-grid">${ABILITIES.map(ab=>`<div style="text-align:center"><div style="font-family:var(--f-head);font-size:8px;letter-spacing:2px;color:var(--text3)">${ab}</div><input id="fe-ab-${ab}" type="number" min="1" max="30" value="${orig.abilities[ab]}" style="width:56px;text-align:center;font-size:17px;padding:4px;margin-bottom:2px;clip-path:none"/><div style="font-family:var(--f-head);font-size:12px;color:var(--ember2)">${modStr(orig.abilities[ab])}</div></div>`).join("")}</div>
+        <div class="sh">HP &amp; Combat</div>
+        <div class="flex" style="flex-wrap:wrap">${[["Max HP","fe-hpmax",orig.hp.max],["Cur HP","fe-hpcur",orig.hp.current],["Temp HP","fe-hptmp",orig.hp.temp||0],["AC","fe-ac",orig.ac],["Speed","fe-speed",orig.speed]].map(([l,id,v])=>`<div class="field"><label class="lbl" style="font-size:8px">${l}</label><input id="${id}" type="number" min="0" value="${v}" style="width:60px"/></div>`).join("")}</div>
+        <div class="sh">Saving Throw Profs</div>
+        <div class="flex" style="flex-wrap:wrap">${ABILITIES.map(ab=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;color:var(--text2);font-family:var(--f-head);font-size:10px;letter-spacing:1px"><input type="checkbox" id="fe-st-${ab}" ${orig.savingThrowProfs?.[ab]?"checked":""}/>${ab}</label>`).join("")}</div>
+      </div>
+    </div>
+    <div class="sh">Skill Proficiencies</div>
+    <div class="g3" style="margin-top:6px">${Object.entries(SKILLS).map(([skill,ab])=>{const pl=orig.skillProfs?.[skill]||0;return`<label onclick="cycSkL(this)" data-pl="${pl}" style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:4px 5px;background:rgba(0,0,0,.3)"><span class="fe-si" style="color:${pl===2?"var(--ember2)":pl===1?"var(--gold)":"var(--iron3)"};font-size:12px">${pl===2?"◆":pl===1?"◈":"◇"}</span><span style="font-size:11px;color:var(--text2)">${skill.replace(/([A-Z])/g," $1").trim()}</span><span style="font-size:8px;color:var(--text4);margin-left:auto">${ab}</span></label>`;}).join("")}</div>
+  </div></div>`;
+}
+function cycSkL(lbl){const cur=parseInt(lbl.dataset.pl)||0,next=(cur+1)%3;lbl.dataset.pl=next;const ic=lbl.querySelector(".fe-si");ic.textContent=next===2?"◆":next===1?"◈":"◇";ic.style.color=next===2?"var(--ember2)":next===1?"var(--gold)":"var(--iron3)";}
+function saveFullEdit(charId){
+  const sp={};document.querySelectorAll("#fe-box .g3 label[data-pl]").forEach(lbl=>{const nm=lbl.querySelector("span:nth-child(2)")?.textContent?.replace(/ /g,"");const pl=parseInt(lbl.dataset.pl)||0;if(pl>0&&nm)sp[nm]=pl;});
+  const stP={};ABILITIES.forEach(ab=>{if(el("fe-st-"+ab)?.checked)stP[ab]=true;});
+  mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(!c)return;
+    [["race","fe-race"],["class","fe-class"],["subclass","fe-subclass"],["background","fe-bg"],["alignment","fe-align"],["playerName","fe-player"]].forEach(([f,id])=>{const v=el(id)?.value;if(v!==undefined)c[f]=v;});
+    c.level=clamp(parseInt(el("fe-level")?.value)||1,1,20);c.xp=parseInt(el("fe-xp")?.value)||0;
+    ABILITIES.forEach(ab=>{const v=parseInt(el("fe-ab-"+ab)?.value);if(!isNaN(v))c.abilities[ab]=clamp(v,1,30);});
+    c.hp.max=parseInt(el("fe-hpmax")?.value)||c.hp.max;c.hp.current=parseInt(el("fe-hpcur")?.value)||c.hp.current;c.hp.temp=parseInt(el("fe-hptmp")?.value)||0;
+    c.ac=parseInt(el("fe-ac")?.value)||c.ac;c.speed=parseInt(el("fe-speed")?.value)||c.speed;
+    c.savingThrowProfs=stP;c.skillProfs=sp;});
+  closeM();toast("Character saved!","ok");if(activeCharId===charId)renderSheet(charId);
+}
+
+// ── MODAL ──────────────────────────────────────────────────────
+function closeM(){el("modal-root").innerHTML="";}
+
+// ── COMBAT HELPERS ─────────────────────────────────────────────
+function nextRound(){mutate(s=>{s.roundCounter=(s.roundCounter||1)+1;s.initiativeTurn=0;});toast("Round "+(session.roundCounter)+" begins!","info");}
+
+function showInitSetup(){
+  const chars=allChars();
+  el("modal-root").innerHTML=`<div class="mbg" onclick="if(event.target===this)closeM()"><div class="mbox" style="max-width:480px">
+    <div class="mtitle">⚔ Set Initiative</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Roll initiative for each combatant. Values are pre-filled with DEX modifier — adjust as needed.</div>
+    ${chars.map(c=>`<div class="flex" style="padding:8px 0;border-bottom:1px solid var(--iron2)">
+      <div style="flex:1;font-family:var(--f-head);font-size:13px;color:${c.isNPC?"var(--blood2)":"var(--gold2)"}">${c.name}${c.isNPC?' <span style="font-size:9px;color:var(--text3)">[NPC]</span>':''}</div>
+      <input id="init-${c.id}" type="number" value="${Math.floor(Math.random()*20)+1+mod(c.abilities?.DEX||10)}" style="width:64px;text-align:center;font-family:var(--f-head);font-size:15px"/>
+    </div>`).join("")}
+    <div class="flex" style="margin-top:16px">
+      <button class="btn primary" onclick="saveInitiative()">⚔ Lock In Order</button>
+      <button class="bsm" onclick="closeM()">Cancel</button>
+    </div>
+  </div></div>`;
+}
+function saveInitiative(){
+  const order=allChars().map(c=>({charId:c.id,name:c.name,isNPC:!!c.isNPC,initiative:parseInt(el("init-"+c.id)?.value||0)})).sort((a,b)=>b.initiative-a.initiative);
+  mutate(s=>{s.initiativeOrder=order;s.initiativeTurn=0;});
+  closeM();toast("Initiative set — combat begins!","ok");
+}
+
+// ── MOBILE ─────────────────────────────────────────────────────
+function toggleSB(){const sb=el("sidebar"),ov=el("mob-ov");sb.classList.toggle("mob-open");ov.classList.toggle("show");}
+
+</script>
+</body>
+</html>async function doLogin(){
+  const serverUrl="wss://dnd-production-a09f.up.railway.app";
+  const httpUrl=serverUrl.replace(/^ws/,"http");
+  const code=(el("join-code").value||"").trim().toUpperCase();
+  const cname=(el("join-charname").value||"").trim();
+  const pname=(el("join-playername").value||"").trim();
+  if(!code){toast("Enter your join code","err");return;}
+  if(!cname){toast("Enter your character name","err");return;}
+  try{
+    const r=await fetch(`${httpUrl}/session/join`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({joinCode:code,characterName:cname,playerName:pname})});
+    const d=await r.json();
+    if(!r.ok){toast(d.error||"Join failed","err");return;}
+    myPendingId=d.pendingId;myRole=d.pendingId;myPin=null;
+    const sr=await fetch(`${httpUrl}/session?joinCode=${code}`);
+    const sd=await sr.json();session=sd.session;
+    localDraft=blankChar(cname);localDraft.playerName=pname;localDraft.id=myPendingId;
+    el("login-screen").style.display="none";
+    el("builder-screen").style.display="flex";
+    el("builder-charname").textContent=cname;
+    renderBuilder();connectWS(serverUrl);
+  }catch(e){toast("Cannot reach server: "+e.message,"err");}
+}
+
