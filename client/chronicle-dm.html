@@ -387,6 +387,11 @@ const ALIGNMENTS=["Lawful Good","Neutral Good","Chaotic Good","Lawful Neutral","
 const XP_THR=[0,300,900,2700,6500,14000,23000,34000,48000,64000,85000,100000,120000,140000,165000,195000,225000,265000,305000,355000];
 const EXHAUST_PENALTIES=["None","Disadvantage on ability checks","Speed halved","Disadvantage on attacks & saves","HP max halved","Speed reduced to 0","Death"];
 const TABS=[{id:"core",icon:"⚔️",label:"Core"},{id:"combat",icon:"🛡",label:"Combat"},{id:"skills",icon:"🎯",label:"Skills"},{id:"spells",icon:"✨",label:"Spells"},{id:"gear",icon:"🎒",label:"Gear"},{id:"notes",icon:"📜",label:"Notes"},{id:"log",icon:"📖",label:"Log"}];
+const BACKGROUNDS=["Acolyte","Artisan","Charlatan","Criminal","Entertainer","Farmer","Guard","Guide","Hermit","Merchant","Noble","Sage","Sailor","Scribe","Soldier","Wayfarer","Custom"];
+const CLASS_HIT_DIE={Barbarian:"d12",Fighter:"d10",Paladin:"d10",Ranger:"d10","Blood Hunter":"d10",Bard:"d8",Cleric:"d8",Druid:"d8",Monk:"d8",Rogue:"d8",Warlock:"d8",Artificer:"d8",Sorcerer:"d6",Wizard:"d6"};
+const CLASS_SAVE_PROFS={Barbarian:["STR","CON"],Bard:["DEX","CHA"],Cleric:["WIS","CHA"],Druid:["INT","WIS"],Fighter:["STR","CON"],Monk:["STR","DEX"],Paladin:["WIS","CHA"],Ranger:["STR","DEX"],Rogue:["DEX","INT"],Sorcerer:["CON","CHA"],Warlock:["WIS","CHA"],Wizard:["INT","WIS"],Artificer:["CON","INT"],"Blood Hunter":["STR","DEX"]};
+const CLASS_SPELL_ABILITY={Bard:"CHA",Cleric:"WIS",Druid:"WIS",Paladin:"CHA",Ranger:"WIS",Sorcerer:"CHA",Warlock:"CHA",Wizard:"INT",Artificer:"INT"};
+const SPELL_ABILITIES=["","STR","DEX","CON","INT","WIS","CHA"];
 window.onerror=(msg,src,line,col,err)=>{console.error("Chronicle error:",msg,src,line);const ls=document.getElementById("login-screen");if(ls&&ls.style.display!=="none")document.body.insertAdjacentHTML("beforeend",`<div style="position:fixed;bottom:10px;left:10px;background:#1c1824;border:1px solid #c0392b;color:#f87171;padding:10px;font-family:monospace;font-size:11px;z-index:9999;max-width:400px">JS Error: ${msg} (line ${line})</div>`);return false;};
 let ws=null,session=null,myRole=null,myPin=null,serverUrl="",activeCharId=null,activeTab="core",reconnectTimer=null;
 let localDraft=null,myPendingId=null;
@@ -438,6 +443,12 @@ window.addEventListener("load",()=>{
 // ── PRE-CAMPAIGN BUILDER ───────────────────────────────────────
 function renderBuilder(){
   const c=localDraft;if(!c)return;
+  const cls=(c.classes&&c.classes[0]?.class)||c.class||"Fighter";
+  const hd=CLASS_HIT_DIE[cls]||"d10";
+  const hdMax=parseInt(hd.slice(1));
+  const suggestedHP=hdMax+mod(c.abilities.CON||10);
+  const isSpellcaster=!!CLASS_SPELL_ABILITY[cls];
+  const spellAbil=c.spellcastingAbility||CLASS_SPELL_ABILITY[cls]||"";
   el("builder-content").innerHTML=`<div class="g2">
     <div>
       <div class="sh">Portrait</div>
@@ -447,16 +458,23 @@ function renderBuilder(){
         <label class="bsm" style="cursor:pointer;display:inline-block">📷 Upload<input type="file" accept="image/*" style="display:none" onchange="builderPort(this)"/></label>
       </div>
       <div class="sh">Identity</div>
-      ${[["Character Name","name"],["Player Name","playerName"],["Background","background"]].map(([l,f])=>`<div class="field"><label class="lbl">${l}</label><input value="${(c[f]||"").replace(/"/g,"&quot;")}" onchange="bSet('${f}',this.value)"/></div>`).join("")}
+      <div class="field"><label class="lbl">Character Name</label><input value="${(c.name||"").replace(/"/g,"&quot;")}" onchange="bSet('name',this.value)"/></div>
+      <div class="field"><label class="lbl">Player Name</label><input value="${(c.playerName||"").replace(/"/g,"&quot;")}" onchange="bSet('playerName',this.value)"/></div>
+      <div class="field"><label class="lbl">Background</label><select onchange="bSet('background',this.value)"><option value="">— Choose —</option>${BACKGROUNDS.map(b=>`<option${b===c.background?" selected":""}>${b}</option>`).join("")}</select></div>
       <div class="field"><label class="lbl">Alignment</label><select onchange="bSet('alignment',this.value)">${ALIGNMENTS.map(a=>`<option${a===c.alignment?" selected":""}>${a}</option>`).join("")}</select></div>
       <div class="g2">
-        <div class="field"><label class="lbl">Race</label><select onchange="bSet('race',this.value)">${RACES.map(r=>`<option${r===c.race?" selected":""}>${r}</option>`).join("")}</select></div>
-        <div class="field"><label class="lbl">Class</label><select onchange="bClass('class',this.value)">${CLASSES.map(r=>`<option${r===((c.classes&&c.classes[0]?.class)||c.class)?" selected":""}>${r}</option>`).join("")}</select></div>
+        <div class="field"><label class="lbl">Species / Race</label><select onchange="bSet('race',this.value)">${RACES.map(r=>`<option${r===c.race?" selected":""}>${r}</option>`).join("")}</select></div>
+        <div class="field"><label class="lbl">Class</label><select onchange="bClassFull(this.value)">${CLASSES.map(r=>`<option${r===cls?" selected":""}>${r}</option>`).join("")}</select></div>
       </div>
       <div class="g2">
-        <div class="field"><label class="lbl">Subclass</label><input value="${(c.classes&&c.classes[0]?.subclass)||c.subclass||""}" onchange="bClass('subclass',this.value)"/></div>
+        <div class="field"><label class="lbl">Subclass <span style="font-size:10px;color:var(--text3)">(Lvl 3+)</span></label><input value="${(c.classes&&c.classes[0]?.subclass)||c.subclass||""}" placeholder="e.g. Champion, Evocation…" onchange="bClass('subclass',this.value)"/></div>
         <div class="field"><label class="lbl">Level</label><input type="number" min="1" max="20" value="${(c.classes&&c.classes[0]?.level)||c.level||1}" onchange="bClass('level',clamp(+this.value,1,20))"/></div>
       </div>
+      <div class="g2">
+        <div class="field"><label class="lbl">XP</label><input type="number" min="0" value="${c.xp||0}" onchange="bSet('xp',+this.value)"/></div>
+        <div class="field"><label class="lbl">Hit Die</label><div style="font-family:var(--f-head);font-size:20px;color:var(--gold2);padding:5px 0">${hd}</div></div>
+      </div>
+      ${isSpellcaster?`<div class="field"><label class="lbl">Spellcasting Ability</label><select onchange="bSet('spellcastingAbility',this.value)">${ABILITIES.map(ab=>`<option value="${ab}"${ab===spellAbil?" selected":""}>${ABILITY_FULL[ab]}</option>`).join("")}</select></div>`:""}
       <div class="sh">Personality</div>
       ${[["Traits","personalityTraits"],["Ideals","ideals"],["Bonds","bonds"],["Flaws","flaws"]].map(([l,f])=>`<div class="field"><label class="lbl">${l}</label><textarea onchange="bSet('${f}',this.value)">${c[f]||""}</textarea></div>`).join("")}
       <div class="sh">Backstory</div>
@@ -464,25 +482,32 @@ function renderBuilder(){
     </div>
     <div>
       <div class="sh">Ability Scores</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5">Standard array: 15, 14, 13, 12, 10, 8 &nbsp;|&nbsp; Point buy: 27 points, max score 15 before species bonus.</div>
       <div class="ab-grid" style="margin-bottom:13px">${ABILITIES.map(ab=>`<div class="ab-block"><div class="ab-ab">${ab}</div>
         <input class="ab-inp" type="number" min="1" max="30" value="${c.abilities[ab]}" onchange="bAb('${ab}',+this.value)"/>
         <div class="ab-mod" id="b-mod-${ab}">${modStr(c.abilities[ab])}</div></div>`).join("")}</div>
       <div class="sh">HP &amp; Combat</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Level 1 Max HP = ${hd} max (${hdMax}) + CON modifier (${modStr(c.abilities.CON||10)}). Suggested: <strong style="color:var(--gold2)">${suggestedHP}</strong></div>
       <div class="flex" style="flex-wrap:wrap;margin-bottom:13px">
         <div class="field"><label class="lbl">Max HP</label><input type="number" value="${c.hp.max}" style="width:70px" onchange="bSet('hp.max',+this.value)"/></div>
         <div class="field"><label class="lbl">AC</label><input type="number" value="${c.ac}" style="width:60px" onchange="bSet('ac',+this.value)"/></div>
-        <div class="field"><label class="lbl">Speed</label><input type="number" value="${c.speed}" style="width:65px" onchange="bSet('speed',+this.value)"/></div>
+        <div class="field"><label class="lbl">Speed (ft)</label><input type="number" value="${c.speed}" style="width:65px" onchange="bSet('speed',+this.value)"/></div>
       </div>
-      <div class="sh">Saving Throw Profs</div>
+      <div class="sh">Saving Throw Proficiencies</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Auto-set for ${cls}. Tick to override (e.g. multiclassing).</div>
       <div class="flex" style="flex-wrap:wrap;margin-bottom:13px">
         ${ABILITIES.map(ab=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;color:var(--text2);font-family:var(--f-head);font-size:10px;letter-spacing:1px"><input type="checkbox" ${c.savingThrowProfs?.[ab]?"checked":""} onchange="bST('${ab}',this.checked)"/>${ab}</label>`).join("")}
       </div>
       <div class="sh">Skill Proficiencies</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">◇ None &nbsp; ◈ Proficient &nbsp; ◆ Expertise</div>
       <div class="g2" style="margin-bottom:13px">${Object.entries(SKILLS).map(([s,ab])=>{const pl=c.skillProfs?.[s]||0;const ico=["◇","◈","◆"],cl=["n","p","e"];return`<div class="sk-row"><span class="sk-icon ${cl[pl]}" onclick="bCycSk('${s}',this)" style="cursor:pointer">${ico[pl]}</span><span style="flex:1;font-size:11px;color:var(--text2)">${s.replace(/([A-Z])/g," $1").trim()}</span><span style="font-family:var(--f-head);font-size:8px;color:var(--text4)">${ab}</span></div>`}).join("")}</div>
+      <div class="sh">Features &amp; Traits</div>
+      <div class="field"><textarea onchange="bSet('features',this.value)" style="min-height:60px" placeholder="Class features, racial traits, feats…">${c.features||""}</textarea></div>
       <div class="sh">Equipment</div>
-      <div class="field"><textarea onchange="bSet('equipment',this.value)" style="min-height:70px">${c.equipment||""}</textarea></div>
-      <div class="sh">Languages &amp; Proficiencies</div>
-      <div class="field"><textarea onchange="bSet('languages',this.value)" style="min-height:50px">${c.languages||""}</textarea></div>
+      <div class="field"><textarea onchange="bSet('equipment',this.value)" style="min-height:60px" placeholder="Starting equipment from class or background…">${c.equipment||""}</textarea></div>
+      <div class="sh">Languages &amp; Other Proficiencies</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">All characters know Common + 2 languages from their species/background.</div>
+      <div class="field"><textarea onchange="bSet('languages',this.value)" style="min-height:50px" placeholder="e.g. Common, Elvish, Dwarvish. Tool: Thieves' Tools…">${c.languages||""}</textarea></div>
     </div>
   </div>`;
 }
@@ -491,6 +516,17 @@ function bAb(ab,val){if(!localDraft)return;localDraft.abilities[ab]=clamp(val,1,
 function bST(ab,val){if(!localDraft)return;localDraft.savingThrowProfs=localDraft.savingThrowProfs||{};localDraft.savingThrowProfs[ab]=val;}
 function bCycSk(skill,iconEl){if(!localDraft)return;localDraft.skillProfs=localDraft.skillProfs||{};const cur=localDraft.skillProfs[skill]||0,next=(cur+1)%3;localDraft.skillProfs[skill]=next;const ico=["◇","◈","◆"],cl=["n","p","e"];iconEl.textContent=ico[next];iconEl.className="sk-icon "+cl[next];}
 function bClass(field,value){if(!localDraft)return;localDraft.classes=localDraft.classes||[{class:"Fighter",subclass:"",level:1,hitDie:"d10"}];localDraft.classes[0][field]=value;}
+function bClassFull(cls){
+  if(!localDraft)return;
+  localDraft.classes=localDraft.classes||[{class:"Fighter",subclass:"",level:1,hitDie:"d10"}];
+  localDraft.classes[0].class=cls;
+  localDraft.classes[0].hitDie=CLASS_HIT_DIE[cls]||"d10";
+  const profs=CLASS_SAVE_PROFS[cls]||[];
+  localDraft.savingThrowProfs={};
+  profs.forEach(ab=>localDraft.savingThrowProfs[ab]=true);
+  localDraft.spellcastingAbility=CLASS_SPELL_ABILITY[cls]||"";
+  renderBuilder();
+}
 function builderPort(input){const f=input.files?.[0];if(!f)return;if(f.size>3*1024*1024){toast("Max 3MB","err");return;}const r=new FileReader();r.onload=e=>{localDraft.portrait=e.target.result;renderBuilder();};r.readAsDataURL(f);}
 async function submitProfile(){
   if(!localDraft){toast("Nothing to submit","err");return;}
@@ -540,7 +576,7 @@ function ccHTML(c){
   return `<div class="cc${active?" active":""}" onclick="selectChar('${c.id}')">
     <div class="cc-inner"><div class="cc-thumb">${ph}</div>
     <div style="flex:1;min-width:0"><div class="cc-name">${c.name}${isMe?' <span style="color:var(--ember);font-size:9px">YOU</span>':""}</div>
-    <div class="cc-class">${c.race} ${c.class}</div><div class="cc-lvl">LVL ${totalLevel(c)}${c.isNPC?" · NPC":""}</div></div></div>
+    <div class="cc-class">${c.race} ${(c.classes&&c.classes[0]?.class)||c.class||"Fighter"}</div><div class="cc-lvl">LVL ${totalLevel(c)}${c.isNPC?" · NPC":""}</div></div></div>
     <div class="tbar"><div class="tfill" style="width:${pct}%;background:${hpC(pct)}"></div></div>
     <div style="font-size:10px;color:var(--text4);margin-top:2px;font-family:var(--f-head);letter-spacing:1px">${c.hp.current}/${c.hp.max} HP${c.hp.temp>0?" +"+c.hp.temp+" TMP":""}</div>
     ${c.conditions.length?`<div style="margin-top:3px">${c.conditions.slice(0,3).map(()=>`<span style="width:5px;height:5px;border-radius:50%;background:var(--blood2);display:inline-block;margin-right:2px"></span>`).join("")}</div>`:""}
@@ -560,7 +596,7 @@ function renderSheet(charId){
       <div class="s-hero-overlay"></div>
       <div class="s-hero-content">
         <div class="s-name${hpLow?" lowhp":""}">${char.name}${char.isNPC?`<span class="npc-badge">NPC</span>`:""}</div>
-        <div class="s-sub">${char.race} · ${char.class}${char.subclass?" · "+char.subclass:""}</div>
+        <div class="s-sub">${char.race} · ${(char.classes&&char.classes[0]?.class)||char.class||"Fighter"}${(char.classes&&char.classes[0]?.subclass)||(char.subclass)?" · "+((char.classes&&char.classes[0]?.subclass)||char.subclass):""}</div>
         <div class="s-align">${char.alignment}${char.background?" · "+char.background:""}</div>
         <div class="flex" style="margin-top:8px">
           ${char.inspiration?`<div class="insp">✦ INSPIRED</div>`:""}
@@ -890,7 +926,7 @@ function showApprovals(){
         `<div style="width:85px;height:106px;border:1px dashed var(--iron3);display:flex;align-items:center;justify-content:center;font-size:30px;opacity:.2;flex-shrink:0">🧙</div>`}
         <div style="flex:1;min-width:0">
           <div style="font-family:var(--f-head);font-size:14px;color:var(--gold2);margin-bottom:2px">${p.name} <span style="font-size:10px;color:var(--text3)">${p.playerName?"("+p.playerName+")":""}</span></div>
-          <div style="font-size:11px;color:var(--ember2);margin-bottom:7px">${d.race||"?"} ${d.class||"?"} ${d.subclass?"· "+d.subclass:""} — Level ${d.level||1}</div>
+          <div style="font-size:11px;color:var(--ember2);margin-bottom:7px">${d.race||"?"} ${(d.classes&&d.classes[0]?.class)||d.class||"?"} ${(d.classes&&d.classes[0]?.subclass)||d.subclass?"· "+((d.classes&&d.classes[0]?.subclass)||d.subclass):""} — Level ${(d.classes&&d.classes[0]?.level)||d.level||1}</div>
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px">${ABILITIES.map(ab=>`<span style="font-family:var(--f-head);font-size:10px;color:var(--text3)">${ab} <span style="color:var(--gold2)">${d.abilities?.[ab]||10}</span> <span style="color:var(--ember2)">${modStr(d.abilities?.[ab]||10)}</span></span>`).join("")}</div>
           ${d.personalityTraits?`<div style="font-size:12px;color:var(--text3);margin-bottom:3px"><strong style="color:var(--text4);font-family:var(--f-head);font-size:8px;letter-spacing:1px">TRAITS</strong> ${d.personalityTraits}</div>`:""}
           ${d.notes?`<div style="font-size:12px;color:var(--text3);margin-bottom:7px"><strong style="color:var(--text4);font-family:var(--f-head);font-size:8px;letter-spacing:1px">BACKSTORY</strong> ${d.notes.slice(0,180)}${d.notes.length>180?"…":""}</div>`:""}
@@ -902,7 +938,7 @@ function showApprovals(){
     ${pendPort.map(c=>`<div class="acard"><div class="flex" style="gap:12px;align-items:flex-start">
       <img src="${c.portraitPending}" style="width:85px;height:106px;object-fit:cover;object-position:top;border:1px solid var(--iron3);flex-shrink:0"/>
       <div><div style="font-family:var(--f-head);font-size:14px;color:var(--gold2);margin-bottom:5px">${c.name}</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:10px">${c.race} ${c.class} — Lv${c.level}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px">${c.race} ${(c.classes&&c.classes[0]?.class)||c.class||"Fighter"} — Lv${totalLevel(c)}</div>
       <div class="flex"><button class="btn success" onclick="apprPort('${c.id}');closeM();showApprovals()">✓ Approve</button><button class="btn danger" onclick="rejPort('${c.id}');closeM();showApprovals()">✗ Reject</button></div></div>
     </div></div>`).join("")}`:""}
     <button class="bsm" onclick="closeM()" style="margin-top:8px">Close</button>
@@ -968,7 +1004,7 @@ function showSetup(){
     <div id="s-chars">${chars.filter(c=>!c.isNPC).map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--iron2)">
       <div class="flex" style="gap:7px">
         <div style="width:30px;height:37px;border:1px solid var(--iron3);background:var(--obsidian);display:flex;align-items:center;justify-content:center;overflow:hidden;clip-path:polygon(0 0,calc(100% - 3px) 0,100% 3px,100% 100%,3px 100%,0 calc(100% - 3px))">${c.portrait?`<img src="${c.portrait}" style="width:100%;height:100%;object-fit:cover"/>`:"🧙"}</div>
-        <div><div style="font-family:var(--f-head);color:var(--gold2)">${c.name}</div><div style="font-size:11px;color:var(--text3)">${c.race} ${c.class} · Lv${c.level}</div></div>
+        <div><div style="font-family:var(--f-head);color:var(--gold2)">${c.name}</div><div style="font-size:11px;color:var(--text3)">${c.race} ${(c.classes&&c.classes[0]?.class)||c.class||"Fighter"} · Lv${totalLevel(c)}</div></div>
       </div>
       <div class="flex"><button class="bsm" onclick="closeM();showFullEdit('${c.id}')">Configure</button><button class="bsm danger" onclick="delChar('${c.id}')">Remove</button></div>
     </div>`).join("")}</div>
@@ -989,15 +1025,22 @@ function showFullEdit(charId){
     </div>
     <div class="g2">
       <div><div class="sh">Identity</div>
-        ${[["Race","fe-race",RACES,orig.race],["Class","fe-class",CLASSES,orig.class],["Subclass","fe-subclass",null,orig.subclass],["Background","fe-bg",null,orig.background],["Alignment","fe-align",ALIGNMENTS,orig.alignment],["Player Name","fe-player",null,orig.playerName]].map(([l,id,opts,val])=>`<div class="field"><label class="lbl">${l}</label>${opts?`<select id="${id}">${opts.map(o=>`<option${o===val?" selected":""}>${o}</option>`).join("")}</select>`:`<input id="${id}" value="${(val||"").replace(/"/g,"&quot;")}"/>`}</div>`).join("")}
-        <div class="flex"><div class="field" style="flex:1"><label class="lbl">Level</label><input id="fe-level" type="number" min="1" max="20" value="${orig.level}"/></div><div class="field" style="flex:1"><label class="lbl">XP</label><input id="fe-xp" type="number" min="0" value="${orig.xp}"/></div></div>
+        ${[["Race","fe-race",RACES,orig.race],["Class","fe-class",CLASSES,(orig.classes&&orig.classes[0]?.class)||orig.class||"Fighter"],["Background","fe-bg",BACKGROUNDS,orig.background],["Alignment","fe-align",ALIGNMENTS,orig.alignment]].map(([l,id,opts,val])=>`<div class="field"><label class="lbl">${l}</label>${opts?`<select id="${id}">${(id==="fe-bg"?[`<option value="">— Choose —</option>`]:[]).join("")}${opts.map(o=>`<option${o===val?" selected":""}>${o}</option>`).join("")}</select>`:`<input id="${id}" value="${(val||"").replace(/"/g,"&quot;")}"/>`}</div>`).join("")}
+        <div class="field"><label class="lbl">Subclass <span style="font-size:9px;color:var(--text3)">(Lvl 3+)</span></label><input id="fe-subclass" value="${((orig.classes&&orig.classes[0]?.subclass)||orig.subclass||"").replace(/"/g,"&quot;")}"/></div>
+        <div class="field"><label class="lbl">Player Name</label><input id="fe-player" value="${(orig.playerName||"").replace(/"/g,"&quot;")}"/></div>
+        <div class="field"><label class="lbl">Spellcasting Ability</label><select id="fe-spell-ab"><option value="">— None —</option>${ABILITIES.map(ab=>`<option value="${ab}"${ab===orig.spellcastingAbility?" selected":""}>${ab} — ${ABILITY_FULL[ab]}</option>`).join("")}</select></div>
+        <div class="flex"><div class="field" style="flex:1"><label class="lbl">Level</label><input id="fe-level" type="number" min="1" max="20" value="${(orig.classes&&orig.classes[0]?.level)||orig.level||1}"/></div><div class="field" style="flex:1"><label class="lbl">XP</label><input id="fe-xp" type="number" min="0" value="${orig.xp}"/></div></div>
       </div>
       <div><div class="sh">Ability Scores</div>
         <div class="ab-grid">${ABILITIES.map(ab=>`<div style="text-align:center"><div style="font-family:var(--f-head);font-size:8px;letter-spacing:2px;color:var(--text3)">${ab}</div><input id="fe-ab-${ab}" type="number" min="1" max="30" value="${orig.abilities[ab]}" style="width:56px;text-align:center;font-size:17px;padding:4px;margin-bottom:2px;clip-path:none"/><div style="font-family:var(--f-head);font-size:12px;color:var(--ember2)">${modStr(orig.abilities[ab])}</div></div>`).join("")}</div>
         <div class="sh">HP &amp; Combat</div>
         <div class="flex" style="flex-wrap:wrap">${[["Max HP","fe-hpmax",orig.hp.max],["Cur HP","fe-hpcur",orig.hp.current],["Temp HP","fe-hptmp",orig.hp.temp||0],["AC","fe-ac",orig.ac],["Speed","fe-speed",orig.speed]].map(([l,id,v])=>`<div class="field"><label class="lbl" style="font-size:8px">${l}</label><input id="${id}" type="number" min="0" value="${v}" style="width:60px"/></div>`).join("")}</div>
         <div class="sh">Saving Throw Profs</div>
-        <div class="flex" style="flex-wrap:wrap">${ABILITIES.map(ab=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;color:var(--text2);font-family:var(--f-head);font-size:10px;letter-spacing:1px"><input type="checkbox" id="fe-st-${ab}" ${orig.savingThrowProfs?.[ab]?"checked":""}/>${ab}</label>`).join("")}</div>
+        <div class="flex" style="flex-wrap:wrap;margin-bottom:10px">${ABILITIES.map(ab=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;color:var(--text2);font-family:var(--f-head);font-size:10px;letter-spacing:1px"><input type="checkbox" id="fe-st-${ab}" ${orig.savingThrowProfs?.[ab]?"checked":""}/>${ab}</label>`).join("")}</div>
+        <div class="sh">Personality</div>
+        ${[["Traits","fe-traits",orig.personalityTraits],["Ideals","fe-ideals",orig.ideals],["Bonds","fe-bonds",orig.bonds],["Flaws","fe-flaws",orig.flaws]].map(([l,id,val])=>`<div class="field"><label class="lbl">${l}</label><textarea id="${id}" style="min-height:50px">${val||""}</textarea></div>`).join("")}
+        <div class="sh">Features &amp; Traits</div>
+        <div class="field"><textarea id="fe-features" style="min-height:70px" placeholder="Class features, racial traits, feats…">${orig.features||""}</textarea></div>
       </div>
     </div>
     <div class="sh">Skill Proficiencies</div>
@@ -1009,12 +1052,35 @@ function saveFullEdit(charId){
   const sp={};document.querySelectorAll("#fe-box .g3 label[data-pl]").forEach(lbl=>{const nm=lbl.querySelector("span:nth-child(2)")?.textContent?.replace(/ /g,"");const pl=parseInt(lbl.dataset.pl)||0;if(pl>0&&nm)sp[nm]=pl;});
   const stP={};ABILITIES.forEach(ab=>{if(el("fe-st-"+ab)?.checked)stP[ab]=true;});
   mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(!c)return;
-    [["race","fe-race"],["class","fe-class"],["subclass","fe-subclass"],["background","fe-bg"],["alignment","fe-align"],["playerName","fe-player"]].forEach(([f,id])=>{const v=el(id)?.value;if(v!==undefined)c[f]=v;});
-    c.level=clamp(parseInt(el("fe-level")?.value)||1,1,20);c.xp=parseInt(el("fe-xp")?.value)||0;
+    // Basic string fields
+    [["race","fe-race"],["alignment","fe-align"],["background","fe-bg"],["playerName","fe-player"]].forEach(([f,id])=>{const v=el(id)?.value;if(v!==undefined)c[f]=v;});
+    // Class → update both legacy field and classes[0]
+    const newClass=el("fe-class")?.value;
+    const newSubclass=el("fe-subclass")?.value||"";
+    const newLevel=clamp(parseInt(el("fe-level")?.value)||1,1,20);
+    if(newClass){
+      c.class=newClass;c.subclass=newSubclass;
+      c.classes=c.classes||[{class:"Fighter",subclass:"",level:1,hitDie:"d10"}];
+      c.classes[0].class=newClass;
+      c.classes[0].subclass=newSubclass;
+      c.classes[0].level=newLevel;
+      c.classes[0].hitDie=CLASS_HIT_DIE[newClass]||c.classes[0].hitDie||"d10";
+    }
+    c.level=newLevel;c.xp=parseInt(el("fe-xp")?.value)||0;
+    // Spellcasting ability
+    c.spellcastingAbility=el("fe-spell-ab")?.value||"";
+    // Ability scores
     ABILITIES.forEach(ab=>{const v=parseInt(el("fe-ab-"+ab)?.value);if(!isNaN(v))c.abilities[ab]=clamp(v,1,30);});
     c.hp.max=parseInt(el("fe-hpmax")?.value)||c.hp.max;c.hp.current=parseInt(el("fe-hpcur")?.value)||c.hp.current;c.hp.temp=parseInt(el("fe-hptmp")?.value)||0;
     c.ac=parseInt(el("fe-ac")?.value)||c.ac;c.speed=parseInt(el("fe-speed")?.value)||c.speed;
-    c.savingThrowProfs=stP;c.skillProfs=sp;});
+    c.savingThrowProfs=stP;c.skillProfs=sp;
+    // Personality & features
+    c.personalityTraits=el("fe-traits")?.value||c.personalityTraits||"";
+    c.ideals=el("fe-ideals")?.value||c.ideals||"";
+    c.bonds=el("fe-bonds")?.value||c.bonds||"";
+    c.flaws=el("fe-flaws")?.value||c.flaws||"";
+    c.features=el("fe-features")?.value||c.features||"";
+    });
   closeM();toast("Character saved!","ok");if(activeCharId===charId)renderSheet(charId);
 }
 
