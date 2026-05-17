@@ -330,6 +330,7 @@ select option{background:var(--stone)}
     </div>
     <div style="flex:1;overflow-y:auto;padding:20px" id="builder-content"></div>
     <div style="padding:14px 20px;background:var(--obsidian);border-top:1px solid var(--iron3);display:flex;gap:8px;flex-shrink:0">
+      <button class="btn" style="padding:12px 18px" onclick="randomiseChar()" title="Fill all fields with random 5E-legal values">🎲 Randomise</button>
       <button class="btn primary" style="flex:1;padding:12px" onclick="submitProfile()">⚔ Submit to DM</button>
     </div>
   </div>
@@ -527,6 +528,61 @@ function bClassFull(cls){
   localDraft.spellcastingAbility=CLASS_SPELL_ABILITY[cls]||"";
   renderBuilder();
 }
+
+// ── RANDOMISE ──────────────────────────────────────────────────
+function randomName(){
+  const pre=["Aer","Bel","Cal","Dar","Eld","Fen","Gal","Hel","Ith","Jyn","Kar","Lor","Mal","Nyr","Oth","Pax","Ren","Sal","Tor","Val","Wren","Xan","Yar","Zev","Cas","Dor","Eira","Finn","Gwen","Ivar","Lira","Mira","Oryn","Rynn","Sael","Thea","Uris"];
+  const suf=["adrin","efin","agorn","ehan","iren","akin","olor","imir","anis","othir","epyr","erin","ysol","ator","awyn","aryn","edris","ifar","ovar","idris","alor","enor","avar","elith","onis","andor"];
+  return pre[Math.floor(Math.random()*pre.length)]+suf[Math.floor(Math.random()*suf.length)];
+}
+function roll4d6Drop(){const r=[1,2,3,4].map(()=>Math.floor(Math.random()*6)+1).sort((a,b)=>a-b);return r.slice(1).reduce((a,b)=>a+b,0);}
+function randomCharData(){
+  const race=RACES[Math.floor(Math.random()*(RACES.length-1))];// skip Custom
+  const cls=CLASSES[Math.floor(Math.random()*CLASSES.length)];
+  const bg=BACKGROUNDS[Math.floor(Math.random()*(BACKGROUNDS.length-1))];// skip Custom
+  const align=ALIGNMENTS[Math.floor(Math.random()*ALIGNMENTS.length)];
+  const abilities={};ABILITIES.forEach(ab=>abilities[ab]=roll4d6Drop());
+  const hitDie=CLASS_HIT_DIE[cls]||"d10";
+  const hdMax=parseInt(hitDie.slice(1));
+  const conMod=Math.floor((abilities.CON-10)/2);
+  const savingThrowProfs={};(CLASS_SAVE_PROFS[cls]||[]).forEach(ab=>savingThrowProfs[ab]=true);
+  // 2 random skill profs
+  const skillProfs={};const shuffled=[...Object.keys(SKILLS)].sort(()=>Math.random()-0.5);
+  shuffled.slice(0,2).forEach(s=>skillProfs[s]=1);
+  return{race,cls,bg,align,abilities,hitDie,savingThrowProfs,skillProfs,
+    spellcastingAbility:CLASS_SPELL_ABILITY[cls]||"",
+    maxHP:Math.max(1,hdMax+conMod),
+    ac:Math.max(10,10+Math.floor((abilities.DEX-10)/2))};
+}
+function randomiseChar(){
+  if(!localDraft)return;
+  const d=randomCharData();
+  const keepName=localDraft.name||randomName();
+  localDraft.race=d.race;localDraft.alignment=d.align;localDraft.background=d.bg;
+  localDraft.name=keepName;
+  localDraft.classes=[{class:d.cls,subclass:"",level:1,hitDie:d.hitDie}];
+  localDraft.class=d.cls;
+  localDraft.savingThrowProfs=d.savingThrowProfs;
+  localDraft.spellcastingAbility=d.spellcastingAbility;
+  localDraft.skillProfs=d.skillProfs;
+  localDraft.abilities=d.abilities;
+  localDraft.hp={max:d.maxHP,current:d.maxHP,temp:0};
+  localDraft.ac=d.ac;localDraft.speed=30;localDraft.xp=0;
+  renderBuilder();toast("Character randomised — edit as needed!","ok");
+}
+function randomiseFE(charId){
+  const orig=allChars().find(c=>c.id===charId);if(!orig)return;
+  const d=randomCharData();
+  mutate(s=>{const c=[...s.characters,...s.npcs].find(x=>x.id===charId);if(!c)return;
+    c.race=d.race;c.alignment=d.align;c.background=d.bg;
+    c.classes=[{class:d.cls,subclass:"",level:1,hitDie:d.hitDie}];c.class=d.cls;
+    c.savingThrowProfs=d.savingThrowProfs;c.spellcastingAbility=d.spellcastingAbility;
+    c.skillProfs=d.skillProfs;c.abilities=d.abilities;
+    c.hp={max:d.maxHP,current:d.maxHP,temp:0};c.ac=d.ac;c.speed=30;c.xp=0;
+  });
+  closeM();showFullEdit(charId);toast("Character randomised — edit as needed!","ok");
+}
+
 function builderPort(input){const f=input.files?.[0];if(!f)return;if(f.size>3*1024*1024){toast("Max 3MB","err");return;}const r=new FileReader();r.onload=e=>{localDraft.portrait=e.target.result;renderBuilder();};r.readAsDataURL(f);}
 async function submitProfile(){
   if(!localDraft){toast("Nothing to submit","err");return;}
@@ -1021,7 +1077,7 @@ function showFullEdit(charId){
   el("modal-root").innerHTML=`<div class="mbg"><div class="mbox" id="fe-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <div class="mtitle" style="margin-bottom:0">Configure: ${orig.name}</div>
-      <div class="flex"><button class="btn primary" onclick="saveFullEdit('${charId}')">Save</button><button class="bsm" onclick="closeM()">Cancel</button></div>
+      <div class="flex"><button class="bsm" onclick="randomiseFE('${charId}')" title="Randomise all stats">🎲 Randomise</button><button class="btn primary" onclick="saveFullEdit('${charId}')">Save</button><button class="bsm" onclick="closeM()">Cancel</button></div>
     </div>
     <div class="g2">
       <div><div class="sh">Identity</div>
